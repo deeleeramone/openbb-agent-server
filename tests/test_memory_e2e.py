@@ -40,6 +40,7 @@ async def memory(tmp_path: Path) -> AsyncIterator[SqliteMemoryStore]:
     try:
         yield store
     finally:
+        store.close()
         await history.aclose()
 
 
@@ -327,6 +328,7 @@ async def test_recall_tool_respects_k() -> None:
             result = await tool.ainvoke({"query": "banana", "k": 2})
         assert len(result) == 2
     finally:
+        store.close()
         await history.aclose()
 
 

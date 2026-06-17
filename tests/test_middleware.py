@@ -44,6 +44,7 @@ async def store_pair(
     try:
         yield history, memory
     finally:
+        memory.close()
         await history.aclose()
         services.reset()
 

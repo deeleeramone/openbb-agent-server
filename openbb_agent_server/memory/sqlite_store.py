@@ -120,6 +120,10 @@ class SqliteMemoryStore(MemoryStore):
             )
             self._code.create_table_if_not_exists()
 
+    def close(self) -> None:
+        """Close the underlying SQLite connection."""
+        self._conn.close()
+
     def _store_for_kind(self, kind: str | None) -> SQLiteVec:
         if _is_code_kind(kind) and self._code is not None:
             return self._code

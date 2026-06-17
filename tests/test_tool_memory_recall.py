@@ -28,6 +28,7 @@ async def memory_store(tmp_path: Path) -> AsyncIterator[SqliteMemoryStore]:
     try:
         yield store
     finally:
+        store.close()
         await history.aclose()
 
 

@@ -23,6 +23,7 @@ async def memory(tmp_path: Path) -> AsyncIterator[SqliteMemoryStore]:
     try:
         yield store
     finally:
+        store.close()
         await history.aclose()
 
 
@@ -141,6 +142,7 @@ async def memory_with_code_embedder(
     try:
         yield store
     finally:
+        store.close()
         await history.aclose()
 
 
@@ -267,6 +269,7 @@ async def memory_with_reranker(
     try:
         yield store
     finally:
+        store.close()
         await history.aclose()
 
 
@@ -303,6 +306,7 @@ async def test_reranker_failure_falls_back_to_embedding_order(
         assert len(out) == 2
         assert {r.text for r in out} == {"banana", "orange"}
     finally:
+        store.close()
         await history.aclose()
 
 
@@ -347,6 +351,7 @@ async def test_reranker_promotes_pinned_outside_fanout(
         assert pinned_b.memory_id in captured_pool[0]
         assert any(r.memory_id in {pinned_a.memory_id, pinned_b.memory_id} for r in out)
     finally:
+        store.close()
         await history.aclose()
 
 
@@ -379,6 +384,7 @@ def test_url_passthrough_for_raw_file_path(tmp_path: Path) -> None:
     raw_path = str(tmp_path / "raw.db")
     store = SqliteMemoryStore(raw_path, embeddings=HashEmbeddings(dim=16))
     assert store._db_file == raw_path
+    store.close()
 
 
 @pytest.mark.asyncio
@@ -416,4 +422,5 @@ async def test_reranker_skips_unknown_memory_ids(
         assert len(out) == 1
         assert out[0].text == "real"
     finally:
+        store.close()
         await history.aclose()

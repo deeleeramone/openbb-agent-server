@@ -96,6 +96,7 @@ async def nim_memory(tmp_path: Path) -> AsyncIterator[SqliteMemoryStore]:
     try:
         yield store
     finally:
+        store.close()
         await history.aclose()
 
 
@@ -196,6 +197,7 @@ async def test_nim_store_with_reranker_runs_two_stage_retrieval(
         assert "Apple" in out[0].text
         assert out[0].score is not None
     finally:
+        store.close()
         await history.aclose()
 
 
