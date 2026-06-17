@@ -52,7 +52,9 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          # 3.13+ so the workspace-mcp optional dep (requires-python >=3.13)
+          # is installable and ty can resolve all imports.
+          python-version: "3.13"
 
       - run: python -m pip install --upgrade pip uv
 
@@ -60,7 +62,6 @@ jobs:
         run: |
           uv pip install --system -e ".[all]"
           uv pip install --system --group dev
-          uv pip install --system "openbb-workspace-mcp @ https://github.com/OpenBB-finance/workspace-mcp/archive/refs/heads/main.zip"
 
       - name: ruff check
         run: ruff check openbb_agent_server tests
