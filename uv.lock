@@ -2699,7 +2699,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.5" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.9" },
     { name = "python-dotenv", specifier = ">=1.0" },
-    { name = "pywry", marker = "extra == 'pywry'", specifier = ">=2.0.2" },
+    { name = "pywry", marker = "extra == 'pywry'", specifier = ">=2.0.4" },
     { name = "snowflake-connector-python", marker = "extra == 'snowflake'", specifier = ">=3.10" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0,<3" },
     { name = "sqlglot", marker = "extra == 'snowflake'", specifier = ">=25.0" },
@@ -2718,7 +2718,7 @@ dev = [
     { name = "pytest-asyncio", specifier = ">=1.3" },
     { name = "pytest-cov", specifier = ">=4.1" },
     { name = "pytest-timeout", specifier = ">=2.3" },
-    { name = "pywry", specifier = ">=2.0.2" },
+    { name = "pywry", specifier = ">=2.0.4" },
     { name = "reportlab", specifier = ">=4.0" },
     { name = "ruff", specifier = ">=0.15,<0.16" },
     { name = "ty", specifier = ">=0.0.1a14" },
@@ -3793,7 +3793,7 @@ wheels = [
 
 [[package]]
 name = "pywry"
-version = "2.0.2"
+version = "2.0.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -3808,32 +3808,32 @@ dependencies = [
     { name = "watchdog" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ab/4e/17ee7108932dc16ec43867ed0b0e6c96d61d15756b8d1434776cb8566f7f/pywry-2.0.2.tar.gz", hash = "sha256:2a063f6ba2b0d858f04e4830aea1df5a4dc2bba88d080dda6807d5321159f358", size = 4424769, upload-time = "2026-05-17T16:16:38.063Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5d/02/887ff4865f8b53a4b9c4b811539cc4675a06b9a2f865e8a2f9bdd96196d7/pywry-2.0.4.tar.gz", hash = "sha256:77fc921cbcfacf377153d24216e3d3140de5323e7308e291cba1be07bf9563df", size = 4426241, upload-time = "2026-06-15T06:44:05.33Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/08/5b/94bb318d94d4fe9f92043d95c150271036941112700cf42534e672d55988/pywry-2.0.2-cp311-cp311-macosx_13_0_x86_64.whl", hash = "sha256:93527a07569dd75b35e648e0f48b0154492a5c61d9faa067de4af9892206631a", size = 15028116, upload-time = "2026-05-17T16:15:11.245Z" },
-    { url = "https://files.pythonhosted.org/packages/a8/8c/49a85c81a3787e16d6d645b161a1c66d036ecf4229416ef7eaeaefdbd4f2/pywry-2.0.2-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:db3dd3de75f1bed9834f09f5d4a9176cd13c2e81c7a5648160428ca24e2b4955", size = 14678954, upload-time = "2026-05-17T16:15:14.218Z" },
-    { url = "https://files.pythonhosted.org/packages/53/a1/fe53361d28c728a68f18a273f6603a3e1a92f871666680408712523fbc29/pywry-2.0.2-cp311-cp311-manylinux_2_35_aarch64.whl", hash = "sha256:608d2da51cedac37e8d90c42c4ddd21f76ab7c893fd1cba031078e2e5298289b", size = 17147612, upload-time = "2026-05-17T16:15:18.154Z" },
-    { url = "https://files.pythonhosted.org/packages/26/a5/1fa5171f2fd3680989dffbf38763f6b7e93feddb9f4bb230bccede503eaa/pywry-2.0.2-cp311-cp311-manylinux_2_35_x86_64.whl", hash = "sha256:afa12923d60f9800dc0c4ba3836bd0423403168a6d2f9085f6da9ae7b8d51b86", size = 17285193, upload-time = "2026-05-17T16:15:22.162Z" },
-    { url = "https://files.pythonhosted.org/packages/5d/fd/c22f274cfd43224130b060e81c3bf6cb781e1a08206bdca08380bf9c01d6/pywry-2.0.2-cp311-cp311-win_amd64.whl", hash = "sha256:27b9df37690a72a7ba8e364d5afd85cfb53b97e8fac5508a33b0e2ae62c11f4f", size = 13854329, upload-time = "2026-05-17T16:15:25.341Z" },
-    { url = "https://files.pythonhosted.org/packages/a2/7b/56e29127be5099262c98de375dc833a3706a8911eecdda50e7205a96a49b/pywry-2.0.2-cp311-cp311-win_arm64.whl", hash = "sha256:e744dcf046496d52924203f0c65d78f779e9a37570230befde65c22f0a2700d0", size = 13276790, upload-time = "2026-05-17T16:15:28.558Z" },
-    { url = "https://files.pythonhosted.org/packages/0a/5e/9e7fe72c5ead973799071a45f7982d01ff930ecf27106ed52dfbc77efd26/pywry-2.0.2-cp312-cp312-macosx_13_0_x86_64.whl", hash = "sha256:5bcc54af107d95348913881bf545f607580ff2a3b8993c4dcbd77b49613e420a", size = 14995703, upload-time = "2026-05-17T16:15:32.23Z" },
-    { url = "https://files.pythonhosted.org/packages/49/48/dbf14294fd3d5ff5c3a14494bdf48d858d2139da26e9fbdbdccfc8684da6/pywry-2.0.2-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:e687561b13fe10c9e6562b93d6181997ceead58399fb9168f0b538dfedb4cab4", size = 14647584, upload-time = "2026-05-17T16:15:35.394Z" },
-    { url = "https://files.pythonhosted.org/packages/5e/3f/5f424bd70d50c5abf0a377f2eb231429e82b27f4329fef52ada9f683c295/pywry-2.0.2-cp312-cp312-manylinux_2_35_aarch64.whl", hash = "sha256:9822f5aaff2489a47e4346f5f71bfeeaa8c594841791498b7e1aed4881097372", size = 17132560, upload-time = "2026-05-17T16:15:39.968Z" },
-    { url = "https://files.pythonhosted.org/packages/2e/10/5548f2d9a9f490b604e71b25ac86c198c3c3395980135d4d8814450eac1b/pywry-2.0.2-cp312-cp312-manylinux_2_35_x86_64.whl", hash = "sha256:c1f289b00c3a81972e2818a8a70b7c0b67d518a911ccc81784480046fec8335b", size = 17288466, upload-time = "2026-05-17T16:15:44.23Z" },
-    { url = "https://files.pythonhosted.org/packages/cf/bb/b5572c1b2e6e009180805a6985d3743b87a6d137fa0a4fd0c6e60b3b63dc/pywry-2.0.2-cp312-cp312-win_amd64.whl", hash = "sha256:bc3b162d1ae0f96feb555d6038a67f736120bed5475e051df9425591e54a297b", size = 13867477, upload-time = "2026-05-17T16:15:48.42Z" },
-    { url = "https://files.pythonhosted.org/packages/63/3a/53c15373b1de7886b6f762bf6111c9e42b9972f2bf5411625a2bd5a5696e/pywry-2.0.2-cp312-cp312-win_arm64.whl", hash = "sha256:0b848c53d6f90bc8b6ffe6968a12db4260b4caa1e43cace95b9ed2076198ac56", size = 13277716, upload-time = "2026-05-17T16:15:52.189Z" },
-    { url = "https://files.pythonhosted.org/packages/13/44/f195ce7d451e1d9f14f9d28701ea73fa45cc2b8295d9bd5bd0eb3bb2a9f2/pywry-2.0.2-cp313-cp313-macosx_13_0_x86_64.whl", hash = "sha256:67b529fd6612078b1e54b055c4efa60a71bb2f6b178501049660d76950860d46", size = 14995967, upload-time = "2026-05-17T16:15:55.735Z" },
-    { url = "https://files.pythonhosted.org/packages/7e/58/01105acbb66ee5e4e3122d6d8cf22899f1e0c40db7b2e830da5212881a7e/pywry-2.0.2-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:80f1f20ee0fa4fa7bba91f5d270463da2f74ef28abc93762f7ef6e6baa9c691e", size = 14647485, upload-time = "2026-05-17T16:15:59.298Z" },
-    { url = "https://files.pythonhosted.org/packages/5b/b0/f5e4e8ff0ca5365ed62c00f2a89314dd8ed0d88fcb4e731d1632938581ff/pywry-2.0.2-cp313-cp313-manylinux_2_35_aarch64.whl", hash = "sha256:f2ecf2c94630830bb8524df318af4ba5d4f8da0ea332ca56002ff1ee715cb5e5", size = 17133765, upload-time = "2026-05-17T16:16:02.99Z" },
-    { url = "https://files.pythonhosted.org/packages/2e/4e/bd0a2dc8d8dc8f2e1f393ec9f0335c710874eba52f536ae02ca98bb3fd5e/pywry-2.0.2-cp313-cp313-manylinux_2_35_x86_64.whl", hash = "sha256:389cd15762a4a978ca8a94f840338f6189cd287d4337c96d40807d2b1e390647", size = 17288532, upload-time = "2026-05-17T16:16:07.182Z" },
-    { url = "https://files.pythonhosted.org/packages/b3/bd/6723f57c1a08f3853d53102947674e28db24e74fe2534c7bd4dc5ba6342b/pywry-2.0.2-cp313-cp313-win_amd64.whl", hash = "sha256:8c56216156e93a155452fbeafa2c2dae1aa664516ca6cc7cb1d3d7dd9663849a", size = 13867211, upload-time = "2026-05-17T16:16:10.371Z" },
-    { url = "https://files.pythonhosted.org/packages/cf/1f/efcfffdb704f15a9176c154c3fcfbd48c35385347a26e27cbe0773adf6f5/pywry-2.0.2-cp313-cp313-win_arm64.whl", hash = "sha256:de0fc60e709cbee1bcd729f929602c1bf481484c0f7376e2107c46ef5b099119", size = 13277520, upload-time = "2026-05-17T16:16:13.545Z" },
-    { url = "https://files.pythonhosted.org/packages/64/09/87b7a3b648d26d7bcb5b8d0f4633c76f6a5902be352809350b7894ac28b4/pywry-2.0.2-cp314-cp314-macosx_13_0_x86_64.whl", hash = "sha256:e564b2397cb8768fb09b8ddaff33d9f65f0c99c4325daf9b95a471ec1e6d8b9f", size = 14779049, upload-time = "2026-05-17T16:16:17.379Z" },
-    { url = "https://files.pythonhosted.org/packages/f9/77/f6fd67c7cab100ca3fbbedb7fec91562a93fdf68f95d993020a96df95a08/pywry-2.0.2-cp314-cp314-macosx_14_0_arm64.whl", hash = "sha256:07fda72b3d12b3fc04c5adf0ab2245b0d4fb3fab614b77108665968ae4ce6988", size = 14383602, upload-time = "2026-05-17T16:16:20.674Z" },
-    { url = "https://files.pythonhosted.org/packages/bc/bd/e3f535a34e722b28e706dc212b5b8ffdac46ea9035a7929cc03816e99c8d/pywry-2.0.2-cp314-cp314-manylinux_2_35_aarch64.whl", hash = "sha256:02120989fcf9240b3977a8322e495dd5ae8e9d6db04bcfcf6453008772e5d3d7", size = 16817458, upload-time = "2026-05-17T16:16:24Z" },
-    { url = "https://files.pythonhosted.org/packages/2b/66/9fb0e5354f89675c776e4481dc8295fef4e6a2ed09ea7be6b517646723ff/pywry-2.0.2-cp314-cp314-manylinux_2_35_x86_64.whl", hash = "sha256:dcd126796ceaee98b0819898020f24b5a84d561c3d50ecf6ee24e181dbd7c79a", size = 16671369, upload-time = "2026-05-17T16:16:27.719Z" },
-    { url = "https://files.pythonhosted.org/packages/6f/c1/d4da465f0f520b70c7a3cb5925cf4802814e039bb4485482ba182bbaf3d0/pywry-2.0.2-cp314-cp314-win_amd64.whl", hash = "sha256:50b2507b499b37f9426400bbf9bb9f2c326b9081237075a5fd2811f72dafe1e2", size = 14072860, upload-time = "2026-05-17T16:16:31.502Z" },
-    { url = "https://files.pythonhosted.org/packages/19/af/4355a00eb2ce2806047ebe62f9f410fc423efca2f6fe649956179919eebd/pywry-2.0.2-cp314-cp314-win_arm64.whl", hash = "sha256:8af7f2561a87245586c513dcb137802fb7bcc5dee691451f3a31f8d775413112", size = 13555070, upload-time = "2026-05-17T16:16:35.535Z" },
+    { url = "https://files.pythonhosted.org/packages/04/75/cd76547fd2cb92d023d89883228730286308d9fdda0a96136a78fa03165f/pywry-2.0.4-cp311-cp311-macosx_13_0_x86_64.whl", hash = "sha256:5ecd1bbb887dc922da1b78cf6586f3238791a0b8b4efbbd3ae32eee5fb5dac34", size = 15029675, upload-time = "2026-06-15T06:42:50.257Z" },
+    { url = "https://files.pythonhosted.org/packages/74/a2/3eb64b31eacf2d832a410d3e8f3e150f595621a52a730b4ef403d1134605/pywry-2.0.4-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:f50dd4c2c2904778edd87fe5a701d44a1e48698906fc6f06df585a2e5faefa21", size = 14680510, upload-time = "2026-06-15T06:42:53.181Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/b2/b5dc95198d08aaafff3e45d56874eaff931e74c6155f4469edb1fa8ea909/pywry-2.0.4-cp311-cp311-manylinux_2_35_aarch64.whl", hash = "sha256:dae4d4312e04324524a93ab39106bdba444a76526f2b6ce4b46b83372e43ed55", size = 17149174, upload-time = "2026-06-15T06:42:56.485Z" },
+    { url = "https://files.pythonhosted.org/packages/97/71/26a19cff8ede778c4231f962aab07da790c90499d034920eba54d7055529/pywry-2.0.4-cp311-cp311-manylinux_2_35_x86_64.whl", hash = "sha256:ac9448e8508e59c18e0ec9b26f4289f83553b39921e540baf259688fcc680160", size = 17286787, upload-time = "2026-06-15T06:42:59.796Z" },
+    { url = "https://files.pythonhosted.org/packages/42/8c/807674ab247a1ce48115fbaa4c3deea3ad428bc9803554b0a31c44c2fb6e/pywry-2.0.4-cp311-cp311-win_amd64.whl", hash = "sha256:88df46aa159fc867d9db89ebb28238965bc57f2a357604f2bfdb3b1e0d5b1f2f", size = 13855907, upload-time = "2026-06-15T06:43:02.863Z" },
+    { url = "https://files.pythonhosted.org/packages/74/1f/731a003a0edbefb1fc7adf11992c5e5d442f0168b351b0ed3f38faafbdc2/pywry-2.0.4-cp311-cp311-win_arm64.whl", hash = "sha256:b661712da73daf5c0d75517e93b2520cd9a4487d45bc1541e7050c2892fe6421", size = 13278367, upload-time = "2026-06-15T06:43:05.786Z" },
+    { url = "https://files.pythonhosted.org/packages/63/6f/6454c1df310d8bf3b68abbe269654648c5e4da75057073efd5cd5047d574/pywry-2.0.4-cp312-cp312-macosx_13_0_x86_64.whl", hash = "sha256:6eb36245b8096df94803f1e972905d9a4e42c8993b1dbe8b924fa5ca06955381", size = 14997227, upload-time = "2026-06-15T06:43:08.723Z" },
+    { url = "https://files.pythonhosted.org/packages/ed/db/778a0096a1988bb902a5de8ddd59c93434dcc2e230151aa3c180c7ab1943/pywry-2.0.4-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:18c8821ec15e7a007182ff48b2b8119853f3bdd6cbcb2edee3af851cf34e1048", size = 14649146, upload-time = "2026-06-15T06:43:12.182Z" },
+    { url = "https://files.pythonhosted.org/packages/45/7c/7492a6b33b648233ed32b417e172b16f30e6d7773779b5d057aa1c6e0e74/pywry-2.0.4-cp312-cp312-manylinux_2_35_aarch64.whl", hash = "sha256:4300022f4d7a91852669bb8a6e43b4a2ff91774d309b32b85d68b861a2b3fe47", size = 17134119, upload-time = "2026-06-15T06:43:15.473Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/40/a03ba518a1c26bc81e2f49c98987a87a833912d1f4113f2bfa5e463099f2/pywry-2.0.4-cp312-cp312-manylinux_2_35_x86_64.whl", hash = "sha256:adf4298f8fec26df6163fe9e423b7ae3439ceb2f59d0b343d9d4f0df3964e1a4", size = 17289991, upload-time = "2026-06-15T06:43:18.641Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/a4/9f5e43b1a0a9ee3e55aa90de21080ed1691f9f6c6dc1a225c9a3ef288469/pywry-2.0.4-cp312-cp312-win_amd64.whl", hash = "sha256:1f33cb322384329cdea54cc6f590032684cea1f475a2dc1c8b4cf843bfa829f7", size = 13869054, upload-time = "2026-06-15T06:43:21.647Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/95/d56b1171a57b191b677c1640059a8e612da76070c683d91ae8fbd9a25b25/pywry-2.0.4-cp312-cp312-win_arm64.whl", hash = "sha256:ca47ec12f91485bc99639349ccefb9e7cc30039fd21f1a9a1edf0032d8183799", size = 13279294, upload-time = "2026-06-15T06:43:24.844Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/64/6c8bbf9083ff78dee4bc35cca5fc3ea5be9c35d1482f2a11591b7dee1358/pywry-2.0.4-cp313-cp313-macosx_13_0_x86_64.whl", hash = "sha256:6f439d7f9418055d86c6a1965ac4adf65cb919e7d5fce43ee6a30fc339059e10", size = 14997525, upload-time = "2026-06-15T06:43:27.812Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/94/d4225e63b1b561c3721edbb2737304db97aee961fe197a217962fc90c713/pywry-2.0.4-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:4ae96ceec5e236f6023ce16c78b100cdf0924f6b9ea5412989f03cc5f05f8b6d", size = 14649041, upload-time = "2026-06-15T06:43:31.183Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/19/0d713a92d4c7444bc3bf7a1a0767c007883c4ba2e49827c4b94b27971c9c/pywry-2.0.4-cp313-cp313-manylinux_2_35_aarch64.whl", hash = "sha256:017ecafb41d3db6900b25921ed90d19208bd90c1d912534d894b9df3add58e98", size = 17135322, upload-time = "2026-06-15T06:43:34.392Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/12/4b6055ece857786dac0c9135779f766e8c219e0815bc9328c1f3fa8c342e/pywry-2.0.4-cp313-cp313-manylinux_2_35_x86_64.whl", hash = "sha256:64bdcbfa64ff1f366e9044330649ce1deeb5159f1a25bba026dbc2c960475548", size = 17290088, upload-time = "2026-06-15T06:43:38.113Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/63/f4006ff180fa33e9a2d2528623c9bb3c6010b9ffff6f3c10fc9439b0e3ba/pywry-2.0.4-cp313-cp313-win_amd64.whl", hash = "sha256:b7b534757b0fcb720cda3fa4c8d58ef5a743bf8a03d798857d7aa8b6a71949a9", size = 13868758, upload-time = "2026-06-15T06:43:41.059Z" },
+    { url = "https://files.pythonhosted.org/packages/e6/0c/d1026113dae5e7b68630fa6ee00b5a3972b5dc54ddc230f6545c7da83adb/pywry-2.0.4-cp313-cp313-win_arm64.whl", hash = "sha256:0b690e23a17124dfd6f758fd01451f1949297794f159384d299bf7b3dd3567da", size = 13279098, upload-time = "2026-06-15T06:43:43.907Z" },
+    { url = "https://files.pythonhosted.org/packages/89/b2/e2a15703e8eb44590189ecbae1a020f2c4bc948475bad479584ce7afe377/pywry-2.0.4-cp314-cp314-macosx_13_0_x86_64.whl", hash = "sha256:b6adef6f72a637f5946c4244b3891d0ee1638ebca4f6a527e850eb7982d99b60", size = 14784506, upload-time = "2026-06-15T06:43:47.057Z" },
+    { url = "https://files.pythonhosted.org/packages/f3/cf/72240116915d7e6dda1f41591ffa928282b36067420d656150960daddc15/pywry-2.0.4-cp314-cp314-macosx_14_0_arm64.whl", hash = "sha256:9e9c5d11fe5c2e000cb2f476d43f5cda44fb8e2d76073a1c47055bf870c79e8f", size = 14415504, upload-time = "2026-06-15T06:43:50.336Z" },
+    { url = "https://files.pythonhosted.org/packages/99/d3/cf003490f61ef1ba2cb6bd3c6f598d21c52f0f6aa5bd4a14a9a5c39863d3/pywry-2.0.4-cp314-cp314-manylinux_2_35_aarch64.whl", hash = "sha256:005cbe775955b9a3491fc91334d567a78708218ecae07679c046331285941f8b", size = 16760265, upload-time = "2026-06-15T06:43:53.566Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/71/5cda01f264c6cebb5d0a00ade5ba25c16e3c87d89e0230f61cab673230ba/pywry-2.0.4-cp314-cp314-manylinux_2_35_x86_64.whl", hash = "sha256:03abbfcff4f1bb6bc2f2ac2d7ce5cd62474a5b178ebf5416b2cdd635df402557", size = 16661389, upload-time = "2026-06-15T06:43:56.73Z" },
+    { url = "https://files.pythonhosted.org/packages/9f/8a/0a015530b32425fbc81fcf20c500e17a93917fd7cbd6ee6d67b06d212381/pywry-2.0.4-cp314-cp314-win_amd64.whl", hash = "sha256:15905e987a3f7eb653bf912f24ef094b62c1964c28a7eb17a30c18ac3b18971f", size = 14077544, upload-time = "2026-06-15T06:43:59.96Z" },
+    { url = "https://files.pythonhosted.org/packages/32/75/de0cd1d8016f6a4b68cca596cd96f3bbd922fb6e3ca95ff5f3425723ad9c/pywry-2.0.4-cp314-cp314-win_arm64.whl", hash = "sha256:a5034f8d0c98a984db36f0f3ce988e6a0ca2ce54d635c86967beefa3f6a5fc80", size = 13563521, upload-time = "2026-06-15T06:44:02.952Z" },
 ]
 
 [[package]]

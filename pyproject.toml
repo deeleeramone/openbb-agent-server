@@ -12,8 +12,6 @@ dependencies = [
     "sse-starlette>=2.1.0",
     "pydantic>=2.7,<3",
     "pydantic-settings>=2.5",
-    # ``.env`` layer of the config cascade (~/.openbb_platform/.env,
-    # $OPENBB_ENV_FILE).
     "python-dotenv>=1.0",
     "sqlalchemy[asyncio]>=2.0,<3",
     "aiosqlite>=0.20",
@@ -22,8 +20,6 @@ dependencies = [
     "pyjwt[crypto]>=2.9",
     "httpx>=0.27,<1.0",
     "uuid7>=0.1",
-    # Agent runtime — required so the default config works without
-    # any optional installs.
     "deepagents>=0.5.0",
     "langchain>=1.0.0",
     "langchain-core>=1.0.0",
@@ -31,24 +27,15 @@ dependencies = [
     "langchain-text-splitters>=0.3",
     "langgraph>=1.0.0",
     "langchain-nvidia-ai-endpoints>=1.0.0",
-    # SQLite vector store (memory_store + widget_store ANN search).
     "sqlite-vec>=0.1.6",
-    # MCP tool sources (mcp_local / mcp_http).
     "fastmcp>=3.2.0",
     "langchain-mcp-adapters>=0.2.0",
-    # Default LangGraph checkpointer — required for resume / replay /
-    # HITL. Postgres / Mongo / Redis variants are optional.
     "langgraph-checkpoint-sqlite>=2.0",
-    # Default web-search backend — no API key needed.
     "ddgs>=9.0",
-    # PDF extraction for the pdf_extract tool source.
     "pdfplumber>=0.11",
 ]
 
 [project.optional-dependencies]
-# Model-provider adapters. None of these is required at install time —
-# the operator selects ``model_provider`` and installs the matching
-# extra.
 anthropic = ["langchain-anthropic>=1.0.0"]
 openai = ["langchain-openai>=0.2.0"]
 bedrock = ["langchain-aws>=0.2.0"]
@@ -61,23 +48,13 @@ google_genai = [
     "google-genai>=1.0.0",
 ]
 groq = ["langchain-groq>=0.2.0"]
-# Postgres + pgvector for production multi-worker deployments.
-# Pulls in the Postgres checkpointer too so the matching plugin works
-# without a second install.
 postgres = [
     "psycopg[binary]>=3.2",
     "pgvector>=0.3",
     "langgraph-checkpoint-postgres>=2.0",
 ]
-# Tavily web-search backend (better quality, requires API key).
 tavily = ["tavily-python>=0.5"]
-# ACP shim for PyWry chat components (openbb_agent_server.acp) — embed
-# the agent loop in a PyWry window instead of (or alongside) the HTTP
-# server. Not part of [all]: pywry is a desktop GUI toolkit that server
-# deployments don't want.
-pywry = ["pywry>=2.0.2"]
-# Snowflake tool source — full Snowflake Cortex + catalog surface.
-# sqlglot drives read-only enforcement / LIMIT injection.
+pywry = ["pywry>=2.0.4"]
 snowflake = [
     "snowflake-connector-python>=3.10",
     "sqlglot>=25.0",
@@ -183,18 +160,9 @@ dev = [
     "ty>=0.0.1a14",
     "reportlab>=4.0",
     # Exercises the ACP shim tests; they skip when pywry is absent.
-    "pywry>=2.0.2",
-    # Makes pywry's PyWryWidget / PyWryChatWidget real anywidget classes
-    # so the canvas bootstrap-delivery tests run against actual traits.
+    "pywry>=2.0.4",
     "anywidget>=0.9",
 ]
-# NOTE: the documentation site lives in ./website (Docusaurus). Its only
-# Python-side tool is pydoc-markdown, which auto-generates the API
-# Reference from the package's docstrings (static source parse — no
-# import). It is run ISOLATED via ``uvx`` so it never enters this
-# project's environment (it conflicts with fastmcp). See website/README.md
-# — generate with ``uvx pydoc-markdown@4.8.2`` and build with
-# ``npm --prefix website run build``.
 
 [build-system]
 requires = ["hatchling"]
@@ -269,13 +237,7 @@ testpaths = ["tests"]
 # import time of langgraph / langchain_core's callback machinery and
 # have nothing to do with this package's code.
 filterwarnings = [
-    # langgraph encrypted serializer's pending deprecation about
-    # ``allowed_objects`` default — fired on import, not by our usage.
     "ignore::langchain_core._api.deprecation.LangChainPendingDeprecationWarning",
-    # langchain_core uses asyncio.iscoroutinefunction; py3.16 will drop it.
     "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
-    # langchain_nvidia warns when a model name isn't in its built-in
-    # catalog. Tests pass deliberately-unknown names to exercise the
-    # passthrough path — the warning is upstream noise, not a defect.
     "ignore:Model .* is unknown, check `available_models`:UserWarning",
 ]
