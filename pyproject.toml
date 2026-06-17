@@ -2,7 +2,7 @@
 name = "openbb-agent-server"
 version = "0.1.0"
 description = "OpenBB Agent Server: pluggable, multi-tenant agent backend wired to the OpenBB Workspace UI."
-authors = [{ name = "OpenBB Team", email = "hello@openbb.co" }]
+authors = [{ name = "Danglewood", email = "85772166+deeleeramone@users.noreply.github.com" }]
 license = { text = "AGPL-3.0-only" }
 readme = "README.md"
 requires-python = ">=3.11,<4"
