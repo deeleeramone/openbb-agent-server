@@ -1,0 +1,43 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/
+dist/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+.ty_cache/
+.mypy_cache/
+
+# --- Docs site (Docusaurus, in ./website) ---
+node_modules/
+website/build/
+website/.docusaurus/
+website/.cache-loader/
+npm-debug.log*
+yarn-error.log*
+
+# Auto-generated API reference: rebuilt from the package docstrings by
+# ``npm run gen-api`` (wiped + regenerated on every run, never
+# hand-edited). The deploy workflow regenerates it in CI, so it is not
+# tracked here.
+/docs/reference/
+
+# --- Secrets / local environment ---
+.env
+.env.*
+!.env.example
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Local agent tooling ---
+.claude/

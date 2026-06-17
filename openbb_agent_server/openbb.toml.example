@@ -1,0 +1,332 @@
+# openbb.toml — openbb-agent-server (example)
+#
+# Required: NVIDIA_API_KEY (env or user_settings.json)
+# Run: openbb-agent-server --config-file openbb.toml
+# Regenerate: openbb-agent-server --generate-config openbb.toml
+
+# [env]
+# NVIDIA_API_BASE = "https://nim.internal.example/v1"
+
+
+[agent]
+host = "127.0.0.1"
+port = 8010
+auth_backend = "openbb_workspace"
+checkpointer_provider = "sqlite"
+
+# Opt-in: mount workspace-mcp in-process at /mcp/workspace so the
+# Workspace UI does not need a separate sidecar. Set to ``true`` only
+# after installing the extra (``pip install
+# 'openbb-agent-server[workspace-mcp]'``). Defaults to ``false`` so the
+# server stays slim when the extra is not used. The mount no-ops with
+# an info log if the setting is on but the extra is missing.
+mount_workspace_mcp = false
+
+# Passthrough kwargs for workspace_mcp.config.Settings (only consulted
+# when mount_workspace_mcp = true). Common keys:
+#   cors_allow = ["http://localhost:5173"]
+#   mcp_path = "/mcp"
+[agent.workspace_mcp_config]
+
+tool_sources = [
+    "artifacts",
+    "widget_data",
+    "inspect_widget_data",
+    "web_search",
+    "fetch_url",
+    "pdf_extract",
+    "dashboard",
+    "client_side",
+    "recall_user_memory",
+    "translate",
+    "rerank",
+    "vision_qa",
+    "gemma_audio",
+    "workspace_mcp",
+]
+
+subagents = ["researcher", "charter", "analyst", "pdf_reader"]
+
+middleware = [
+    "tool_message_normaliser",
+    "tool_filter",
+    "tool_call_announcer",
+    "usage_recorder",
+    "tool_call_ledger",
+    "loop_guard",
+    "call_limit",
+    "tool_call_limit",
+]
+
+embeddings_provider = "nvidia"
+embeddings_model    = "nvidia/nv-embed-v1"
+
+embeddings_code_provider = "nvidia-code"
+embeddings_code_model    = "nvidia/nv-embedcode-7b-v1"
+
+reranker_provider = "nvidia"
+reranker_model    = "nvidia/rerank-qa-mistral-4b"
+rerank_fanout     = 32
+
+translation_provider     = "nvidia"
+translation_model        = "nvidia/riva-translate-4b-instruct-v1_1"
+translate_for_ingestion  = true
+ingest_target_language   = "English"
+
+ingest_char_threshold = 2000
+ingest_chunk_chars    = 1500
+ingest_chunk_overlap  = 200
+
+default_profile = "default"
+
+
+[agent.middleware_config.tool_filter]
+# Keep ``ls`` and ``read_file`` — DeepAgents spills large tool
+# results (pdf_extract, search_pdf, etc.) into a virtual filesystem
+# at ``/large_tool_results/call-<id>`` and the model has to call
+# ``read_file`` to fetch them back.
+excluded = ["execute", "write_file", "edit_file", "glob", "grep"]
+
+
+[agent.metadata]
+name = "OpenBB · NVIDIA Stack"
+description = "DeepAgents harness with openai/gpt-oss-120b driving the chat."
+
+
+[agent.model]
+provider = "nvidia"
+name     = "openai/gpt-oss-120b"
+
+[agent.model.config]
+temperature           = 0.2
+max_completion_tokens = 4096
+top_p                 = 1.0
+frequency_penalty     = 0
+presence_penalty      = 0
+extra_body = { reasoning_effort = "medium" }
+
+[agent.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+widget-global-search    = true
+mcp-tools               = true
+file-upload             = false
+generative-ui           = true
+
+[agent.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web when answering."
+default     = false
+
+[agent.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+
+# [agent.tool_source_config.vision_qa]
+# model = "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
+
+# [agent.tool_source_config.paligemma_vision]
+# model = "google/google-paligemma"
+
+# [agent.tool_source_config.web_search]
+# provider = "tavily"
+
+
+# ── mistral-large-3 ──────────────────────────────────────────────────────────
+[agent.profiles.mistral-large-3.metadata]
+name = "OpenBB · Mistral Large 3 (675B)"
+description = "Long-context Mistral-Large-3 (675B) with native vision."
+
+[agent.profiles.mistral-large-3.model]
+provider = "nvidia"
+name     = "mistralai/mistral-large-3-675b-instruct-2512"
+
+[agent.profiles.mistral-large-3.model.config]
+temperature           = 0.05
+max_completion_tokens = 16384
+top_p                 = 0.9
+
+[agent.profiles.mistral-large-3.tool_source_config.vision_qa]
+model = "mistralai/mistral-large-3-675b-instruct-2512"
+
+[agent.profiles.mistral-large-3.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+mcp-tools               = true
+
+[agent.profiles.mistral-large-3.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web when answering."
+default     = false
+
+[agent.profiles.mistral-large-3.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+
+# ── transcribe ───────────────────────────────────────────────────────────────
+# Chat model is tool-capable; gemma-3n is the audio target via the
+# ``gemma_audio`` tool, not the chat reasoner. (NIM's gemma-3n-e4b-it
+# is deployed without ``--enable-auto-tool-choice`` so it 400s on
+# bound-tools requests — it can only be invoked as a tool target.)
+[agent.profiles.transcribe.metadata]
+name = "OpenBB · Transcribe"
+description = "Audio / video transcription specialist (gemma-3n via tool)."
+
+[agent.profiles.transcribe.model]
+provider = "nvidia"
+name     = "stepfun-ai/step-3.5-flash"
+
+[agent.profiles.transcribe.model.config]
+temperature           = 0.2
+max_completion_tokens = 8192
+top_p                 = 0.9
+extra_body = { reasoning_effort = "low" }
+
+tool_sources = ["artifacts", "pdf_extract", "gemma_audio", "paligemma_vision", "inspect_widget_data"]
+subagents    = []
+
+[agent.profiles.transcribe.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+mcp-tools               = false
+
+
+# ── qwen3-coder ──────────────────────────────────────────────────────────────
+[agent.profiles.qwen3-coder.metadata]
+name = "OpenBB · Qwen3 Coder (480B)"
+description = "Code-generation specialist on qwen/qwen3-coder-480b-a35b-instruct."
+
+[agent.profiles.qwen3-coder.model]
+provider = "nvidia"
+name     = "qwen/qwen3-coder-480b-a35b-instruct"
+
+[agent.profiles.qwen3-coder.model.config]
+temperature           = 0.2
+max_completion_tokens = 16384
+top_p                 = 0.95
+
+tool_sources = [
+    "artifacts",
+    "widget_data",
+    "inspect_widget_data",
+    "pdf_extract",
+    "recall_user_memory",
+    "web_search",
+    "workspace_mcp",
+]
+subagents = ["analyst"]
+
+[agent.profiles.qwen3-coder.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+mcp-tools               = true
+
+[agent.profiles.qwen3-coder.features.search-web]
+label       = "Search Web"
+description = "Allow the coder to search the public web."
+default     = false
+
+[agent.profiles.qwen3-coder.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+# ── seed-oss ─────────────────────────────────────────────────────────────────
+[agent.profiles.seed-oss.metadata]
+name = "OpenBB · Seed-OSS 36B (Thinking Budget)"
+description = "ByteDance Seed-OSS 36B with a per-turn thinking_budget cap."
+
+[agent.profiles.seed-oss.model]
+provider = "nvidia"
+name     = "bytedance/seed-oss-36b-instruct"
+
+[agent.profiles.seed-oss.model.config]
+temperature           = 0.3
+max_completion_tokens = 8192
+top_p                 = 0.9
+extra_body = { thinking_budget = 1024 }
+
+[agent.profiles.seed-oss.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+mcp-tools               = true
+
+[agent.profiles.seed-oss.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles.seed-oss.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+
+[agent.profiles.step-flash.metadata]
+name = "OpenBB · Step 3.5 Flash (Reasoning)"
+description = "StepFun Step-3.5-Flash reasoning model."
+
+[agent.profiles.step-flash.model]
+provider = "nvidia"
+name     = "stepfun-ai/step-3.5-flash"
+
+[agent.profiles.step-flash.model.config]
+temperature           = 0.4
+max_completion_tokens = 8192
+top_p                 = 0.9
+extra_body = { reasoning_effort = "medium" }
+
+[agent.profiles.step-flash.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+mcp-tools               = true
+
+[agent.profiles.step-flash.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles.step-flash.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+
+[agent.profiles.minimax-m2.metadata]
+name = "OpenBB · MiniMax M2.7"
+description = "MiniMax M2.7 long-context generalist."
+
+[agent.profiles.minimax-m2.model]
+provider = "nvidia"
+name     = "minimaxai/minimax-m2.7"
+
+[agent.profiles.minimax-m2.model.config]
+temperature           = 0.4
+max_completion_tokens = 8192
+top_p                 = 0.9
+
+[agent.profiles.minimax-m2.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+mcp-tools               = true
+
+[agent.profiles.minimax-m2.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles.minimax-m2.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false

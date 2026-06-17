@@ -1,0 +1,94 @@
+name: 📚 deploy docs
+
+# Build the Docusaurus site and deploy it to GitHub Pages whenever a
+# push to ``main`` changes content that would alter the rendered docs.
+#
+# The API reference is generated from the package docstrings at build
+# time (``npm run gen-api`` → ``pydoc-markdown`` via ``uvx``, parsing the
+# source statically), so a docstring-only edit under
+# ``openbb_agent_server/`` is enough to republish — that is why the path
+# filter watches the Python source, not just ``docs/`` and ``website/``.
+#
+# One-time setup: in the repo, Settings → Pages → "Build and deployment"
+# → Source must be set to "GitHub Actions" for ``deploy-pages`` to work.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'website/**'
+      - 'openbb_agent_server/**'
+      # ``pydoc-markdown.yml`` at the repo root is NOT consumed by the
+      # build — gen-api.mjs writes its own equivalent config to a temp
+      # dir (the effective generator config is the inline string in
+      # website/scripts/gen-api.mjs, already covered by ``website/**``).
+      # Kept here only as a defensive trigger; remove for zero false
+      # positives.
+      - 'pydoc-markdown.yml'
+      - '.github/workflows/deploy-docs-openbb-agent-server.yml'
+  workflow_dispatch:
+
+# Least privilege by default; the deploy job widens to what Pages needs.
+permissions:
+  contents: read
+
+# One Pages deployment at a time. Do NOT cancel an in-flight deploy — a
+# half-applied deployment can leave the published site broken.
+concurrency:
+  group: pages-openbb-agent-server
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      # Python + uv exist only to provide ``uvx`` for the API-reference
+      # generator. pydoc-markdown reads the package statically (griffe),
+      # so openbb-agent-server itself is never imported or installed.
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - run: python -m pip install --upgrade pip uv
+
+      - name: Install site dependencies
+        working-directory: website
+        run: npm ci
+
+      - name: Generate API reference from docstrings
+        working-directory: website
+        run: npm run gen-api
+
+      - name: Build the site
+        working-directory: website
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: website/build
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write      # publish to the Pages site
+      id-token: write   # OIDC token consumed by deploy-pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

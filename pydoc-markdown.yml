@@ -1,0 +1,35 @@
+# Auto-generates the API Reference from openbb_agent_server docstrings into
+# docs/reference/ as Docusaurus Markdown. Run ISOLATED so it never enters
+# the project venv (it conflicts with fastmcp):
+#
+#     uvx pydoc-markdown@4.8.2
+#
+# It parses source statically (no import), so optional-dependency modules
+# document fine without their extras installed.
+loaders:
+  - type: python
+    search_path: ["."]
+    packages: ["openbb_agent_server"]
+processors:
+  - type: filter
+    documented_only: false
+    exclude_private: true
+    exclude_special: true
+    do_not_filter_modules: true
+    skip_empty_modules: false
+    # ``default()`` applies the options above; the extra clauses drop
+    # ``from x import y`` indirections (so module imports don't leak in as
+    # headings) and undocumented module/class variables (logger, constants,
+    # Pydantic fields documented via the class) which would otherwise render
+    # as empty headings.
+    expression: >-
+      default() and obj.__class__.__name__ != 'Indirection'
+      and not (obj.__class__.__name__ == 'Variable' and not obj.docstring)
+  # NOTE: the ``crossref`` processor is intentionally OMITTED — it mangles
+  # the codebase's Sphinx roles (:class:/:meth:/:data:) into broken text.
+  # gen-api.mjs strips those roles to plain inline code instead.
+renderer:
+  type: docusaurus
+  docs_base_path: docs
+  relative_output_path: reference
+  sidebar_top_level_label: null

@@ -1,0 +1,281 @@
+[project]
+name = "openbb-agent-server"
+version = "0.1.0"
+description = "OpenBB Agent Server: pluggable, multi-tenant agent backend wired to the OpenBB Workspace UI."
+authors = [{ name = "OpenBB Team", email = "hello@openbb.co" }]
+license = { text = "AGPL-3.0-only" }
+readme = "README.md"
+requires-python = ">=3.11,<4"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.32.0",
+    "sse-starlette>=2.1.0",
+    "pydantic>=2.7,<3",
+    "pydantic-settings>=2.5",
+    # ``.env`` layer of the config cascade (~/.openbb_platform/.env,
+    # $OPENBB_ENV_FILE).
+    "python-dotenv>=1.0",
+    "sqlalchemy[asyncio]>=2.0,<3",
+    "aiosqlite>=0.20",
+    "alembic>=1.13",
+    "argon2-cffi>=23.1",
+    "pyjwt[crypto]>=2.9",
+    "httpx>=0.27,<1.0",
+    "uuid7>=0.1",
+    # Agent runtime — required so the default config works without
+    # any optional installs.
+    "deepagents>=0.5.0",
+    "langchain>=1.0.0",
+    "langchain-core>=1.0.0",
+    "langchain-community>=0.3",
+    "langchain-text-splitters>=0.3",
+    "langgraph>=1.0.0",
+    "langchain-nvidia-ai-endpoints>=1.0.0",
+    # SQLite vector store (memory_store + widget_store ANN search).
+    "sqlite-vec>=0.1.6",
+    # MCP tool sources (mcp_local / mcp_http).
+    "fastmcp>=3.2.0",
+    "langchain-mcp-adapters>=0.2.0",
+    # Default LangGraph checkpointer — required for resume / replay /
+    # HITL. Postgres / Mongo / Redis variants are optional.
+    "langgraph-checkpoint-sqlite>=2.0",
+    # Default web-search backend — no API key needed.
+    "ddgs>=9.0",
+    # PDF extraction for the pdf_extract tool source.
+    "pdfplumber>=0.11",
+]
+
+[project.optional-dependencies]
+# Model-provider adapters. None of these is required at install time —
+# the operator selects ``model_provider`` and installs the matching
+# extra.
+anthropic = ["langchain-anthropic>=1.0.0"]
+openai = ["langchain-openai>=0.2.0"]
+bedrock = ["langchain-aws>=0.2.0"]
+vertex = [
+    "langchain-google-genai>=2.0.0",
+    "google-genai>=1.0.0",
+]
+google_genai = [
+    "langchain-google-genai>=2.0.0",
+    "google-genai>=1.0.0",
+]
+groq = ["langchain-groq>=0.2.0"]
+# Postgres + pgvector for production multi-worker deployments.
+# Pulls in the Postgres checkpointer too so the matching plugin works
+# without a second install.
+postgres = [
+    "psycopg[binary]>=3.2",
+    "pgvector>=0.3",
+    "langgraph-checkpoint-postgres>=2.0",
+]
+# Tavily web-search backend (better quality, requires API key).
+tavily = ["tavily-python>=0.5"]
+# ACP shim for PyWry chat components (openbb_agent_server.acp) — embed
+# the agent loop in a PyWry window instead of (or alongside) the HTTP
+# server. Not part of [all]: pywry is a desktop GUI toolkit that server
+# deployments don't want.
+pywry = ["pywry>=2.0.2"]
+# Snowflake tool source — full Snowflake Cortex + catalog surface.
+# sqlglot drives read-only enforcement / LIMIT injection.
+snowflake = [
+    "snowflake-connector-python>=3.10",
+    "sqlglot>=25.0",
+]
+# In-process Workspace MCP server. When installed, the agent server
+# mounts workspace-mcp at /mcp/workspace so operators do not need to
+# run a separate sidecar. Tracks main; pin to a SHA in your own
+# requirements file for reproducible builds.
+#
+# Gated to Python >=3.13: upstream workspace-mcp's pyproject sets
+# requires-python = ">=3.13". On 3.11/3.12 the extra resolves to an
+# empty list and the in-process mount soft-skips with an info log.
+workspace-mcp = [
+    "openbb-workspace-mcp @ https://github.com/OpenBB-finance/workspace-mcp/archive/refs/heads/main.zip ; python_version >= '3.13'",
+]
+
+all = [
+    "openbb-agent-server[anthropic,openai,bedrock,vertex,google_genai,groq,postgres,tavily,snowflake,workspace-mcp]",
+]
+
+[project.scripts]
+openbb-agent-server = "openbb_agent_server.main:main"
+# Desktop canvas app — requires the [pywry] extra.
+openbb-agent-canvas = "openbb_agent_server.acp.canvas_app:main"
+
+[project.urls]
+Homepage = "https://github.com/deeleeramone/openbb-agent-server"
+Repository = "https://github.com/deeleeramone/openbb-agent-server"
+
+[project.entry-points."openbb_agent_server.auth"]
+none = "openbb_agent_server.plugins.auth.none:NoneAuthBackend"
+bearer_static = "openbb_agent_server.plugins.auth.bearer_static:BearerStaticAuthBackend"
+api_key_table = "openbb_agent_server.plugins.auth.api_key_table:ApiKeyTableAuthBackend"
+oidc_jwt = "openbb_agent_server.plugins.auth.oidc_jwt:OidcJwtAuthBackend"
+openbb_workspace = "openbb_agent_server.plugins.auth.openbb_workspace:OpenBBWorkspaceAuthBackend"
+
+[project.entry-points."openbb_agent_server.models"]
+anthropic = "openbb_agent_server.plugins.models.anthropic_provider:AnthropicProvider"
+openai = "openbb_agent_server.plugins.models.openai_provider:OpenAIProvider"
+openai_compat = "openbb_agent_server.plugins.models.openai_compat_provider:OpenAICompatProvider"
+nvidia = "openbb_agent_server.plugins.models.nvidia_provider:NvidiaProvider"
+bedrock = "openbb_agent_server.plugins.models.bedrock_provider:BedrockProvider"
+vertex = "openbb_agent_server.plugins.models.vertex_provider:VertexProvider"
+google_genai = "openbb_agent_server.plugins.models.google_genai_provider:GoogleGenAIProvider"
+groq = "openbb_agent_server.plugins.models.groq_provider:GroqProvider"
+fake = "openbb_agent_server.plugins.models.fake_provider:FakeProvider"
+snowflake = "openbb_agent_server.plugins.models.snowflake_provider:SnowflakeProvider"
+
+[project.entry-points."openbb_agent_server.tools"]
+python_module = "openbb_agent_server.plugins.tools.python_module:PythonModuleToolSource"
+client_side = "openbb_agent_server.plugins.tools.client_side:ClientSideToolSource"
+mcp_local = "openbb_agent_server.plugins.tools.mcp_local:LocalMcpToolSource"
+mcp_http = "openbb_agent_server.plugins.tools.mcp_http:HttpMcpToolSource"
+recall_user_memory = "openbb_agent_server.plugins.tools.memory_recall:MemoryRecallToolSource"
+web_search = "openbb_agent_server.plugins.tools.web_search:WebSearchToolSource"
+fetch_url = "openbb_agent_server.plugins.tools.fetch_url:FetchUrlToolSource"
+widget_data = "openbb_agent_server.plugins.tools.widget_data:WidgetDataToolSource"
+inspect_widget_data = "openbb_agent_server.plugins.tools.inspect_widget_data:InspectWidgetDataToolSource"
+pdf_extract = "openbb_agent_server.plugins.tools.pdf_extract:PdfExtractToolSource"
+artifacts = "openbb_agent_server.plugins.tools.artifacts:ArtifactsToolSource"
+dashboard = "openbb_agent_server.plugins.tools.dashboard:DashboardToolSource"
+snowflake = "openbb_agent_server.plugins.tools.snowflake_tools:SnowflakeToolSource"
+groq_audio = "openbb_agent_server.plugins.tools.groq_audio:GroqAudioToolSource"
+gemini_image = "openbb_agent_server.plugins.tools.gemini_image:GeminiImageToolSource"
+gemini_embeddings = "openbb_agent_server.plugins.tools.gemini_embeddings:GeminiEmbeddingsToolSource"
+workspace_mcp = "openbb_agent_server.plugins.tools.workspace_mcp:WorkspaceMcpToolSource"
+translate = "openbb_agent_server.plugins.tools.translate:NvidiaTranslateToolSource"
+rerank = "openbb_agent_server.plugins.tools.rerank:NvidiaRerankToolSource"
+vision_qa = "openbb_agent_server.plugins.tools.vision_qa:VisionQaToolSource"
+gemma_audio = "openbb_agent_server.plugins.tools.gemma_audio:GemmaAudioToolSource"
+paligemma_vision = "openbb_agent_server.plugins.tools.paligemma_vision:PaliGemmaVisionToolSource"
+background_jobs = "openbb_agent_server.plugins.tools.background_jobs:BackgroundJobsToolSource"
+pywry_canvas = "openbb_agent_server.plugins.tools.pywry_canvas:PyWryCanvasToolSource"
+
+[project.entry-points."openbb_agent_server.middleware"]
+usage_recorder = "openbb_agent_server.plugins.middleware.usage_recorder:UsageRecorderMiddlewareFactory"
+tool_call_ledger = "openbb_agent_server.plugins.middleware.tool_call_ledger:ToolCallLedgerMiddlewareFactory"
+call_limit = "openbb_agent_server.plugins.middleware.call_limit:CallLimitMiddlewareFactory"
+tool_call_limit = "openbb_agent_server.plugins.middleware.call_limit:ToolCallLimitMiddlewareFactory"
+tool_call_announcer = "openbb_agent_server.plugins.middleware.tool_call_announcer:ToolCallAnnouncerMiddlewareFactory"
+tool_message_normaliser = "openbb_agent_server.plugins.middleware.tool_message_normaliser:ToolMessageNormaliserMiddlewareFactory"
+tool_filter = "openbb_agent_server.plugins.middleware.tool_filter:ToolFilterMiddlewareFactory"
+loop_guard = "openbb_agent_server.plugins.middleware.loop_guard:LoopGuardMiddlewareFactory"
+
+[project.entry-points."openbb_agent_server.checkpointers"]
+inmemory = "openbb_agent_server.plugins.checkpointers.inmemory:InMemoryCheckpointerProvider"
+sqlite = "openbb_agent_server.plugins.checkpointers.sqlite:SqliteCheckpointerProvider"
+postgres = "openbb_agent_server.plugins.checkpointers.postgres:PostgresCheckpointerProvider"
+
+[project.entry-points."openbb_agent_server.subagents"]
+researcher = "openbb_agent_server.plugins.subagents.researcher:ResearcherSubAgent"
+charter = "openbb_agent_server.plugins.subagents.charter:CharterSubAgent"
+analyst = "openbb_agent_server.plugins.subagents.analyst:AnalystSubAgent"
+pdf_reader = "openbb_agent_server.plugins.subagents.pdf_reader:PdfReaderSubAgent"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+    "pytest-asyncio>=1.3",
+    "pytest-cov>=4.1",
+    "pytest-timeout>=2.3",
+    "ruff>=0.15,<0.16",
+    "ty>=0.0.1a14",
+    "reportlab>=4.0",
+    # Exercises the ACP shim tests; they skip when pywry is absent.
+    "pywry>=2.0.2",
+    # Makes pywry's PyWryWidget / PyWryChatWidget real anywidget classes
+    # so the canvas bootstrap-delivery tests run against actual traits.
+    "anywidget>=0.9",
+]
+# NOTE: the documentation site lives in ./website (Docusaurus). Its only
+# Python-side tool is pydoc-markdown, which auto-generates the API
+# Reference from the package's docstrings (static source parse — no
+# import). It is run ISOLATED via ``uvx`` so it never enters this
+# project's environment (it conflicts with fastmcp). See website/README.md
+# — generate with ``uvx pydoc-markdown@4.8.2`` and build with
+# ``npm --prefix website run build``.
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+# The workspace-mcp extra is a direct GitHub URL reference.
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["openbb_agent_server"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"openbb_agent_server/openbb.toml.example" = "openbb_agent_server/openbb.toml.example"
+"openbb_agent_server/prompts/default_system_prompt.md" = "openbb_agent_server/prompts/default_system_prompt.md"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "openbb_agent_server",
+    "README.md",
+    "pyproject.toml",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+fix = true
+
+[tool.ruff.lint]
+select = ["D", "E", "W", "F", "S", "UP", "I", "PLC", "PLE", "PLR", "PLW", "SIM", "T20"]
+ignore = [
+    # Function-size complexity heuristics are not enforced — wire-format
+    # parsers (PDF-shape detection, message conversion, SSE translation)
+    # are inherently branchy, and splitting them purely to satisfy a
+    # branch/return count scatters the logic and hurts readability.
+    "PLR2004", "PLR0911", "PLR0912", "PLR0913", "PLR0915", "PLC0415",
+    "E402", "E501",
+    "D202", "D203", "D205", "D206", "D210", "D212", "D213", "D214",
+    "D215", "D300", "D400", "D404", "D405", "D406", "D407", "D408",
+    "D409", "D410", "D411", "D413", "D415", "D416", "D417",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "S101", "S104", "S105", "S106", "S108",
+    "D",
+    "F841",
+    "PLW0108",
+    "SIM105", "SIM117",
+]
+"**/__init__.py" = ["F401"]
+# Plugin / persistence / memory classes are concrete implementations of
+# entry-point ABCs (``ModelProvider``, ``ToolSource``, ``Middleware``,
+# ``HistoryStore``, ``MemoryStore``, …)
+"openbb_agent_server/plugins/**" = ["D101", "D102", "D103", "D105"]
+"openbb_agent_server/persistence/**" = ["D101", "D102", "D103", "D105"]
+"openbb_agent_server/memory/**" = ["D101", "D102", "D103", "D105"]
+"openbb_agent_server/observability/**" = ["D101", "D102", "D103", "D105"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-wrap-aliases = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts = "-q --strict-markers"
+testpaths = ["tests"]
+# Silence upstream warnings from deps we don't own. These are fired at
+# import time of langgraph / langchain_core's callback machinery and
+# have nothing to do with this package's code.
+filterwarnings = [
+    # langgraph encrypted serializer's pending deprecation about
+    # ``allowed_objects`` default — fired on import, not by our usage.
+    "ignore::langchain_core._api.deprecation.LangChainPendingDeprecationWarning",
+    # langchain_core uses asyncio.iscoroutinefunction; py3.16 will drop it.
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
+    # langchain_nvidia warns when a model name isn't in its built-in
+    # catalog. Tests pass deliberately-unknown names to exercise the
+    # passthrough path — the warning is upstream noise, not a defect.
+    "ignore:Model .* is unknown, check `available_models`:UserWarning",
+]
