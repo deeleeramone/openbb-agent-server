@@ -280,12 +280,8 @@ def _mount_workspace_mcp(app: FastAPI, settings: AgentServerSettings) -> None:
         pip install 'openbb-agent-server[workspace-mcp]'
     """
     try:
-        from workspace_mcp.app import (
-            create_app as _create_workspace_mcp,  # ty: ignore[unresolved-import]
-        )
-        from workspace_mcp.config import (
-            Settings as _WorkspaceMcpSettings,  # ty: ignore[unresolved-import]
-        )
+        from workspace_mcp.app import create_app as _create_workspace_mcp
+        from workspace_mcp.config import Settings as _WorkspaceMcpSettings
     except ImportError:
         logger.info(
             "workspace-mcp extra not installed; in-process mount skipped. "

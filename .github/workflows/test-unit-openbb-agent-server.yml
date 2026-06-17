@@ -60,6 +60,7 @@ jobs:
         run: |
           uv pip install --system -e ".[all]"
           uv pip install --system --group dev
+          uv pip install --system "openbb-workspace-mcp @ https://github.com/OpenBB-finance/workspace-mcp/archive/refs/heads/main.zip"
 
       - name: ruff check
         run: ruff check openbb_agent_server tests
