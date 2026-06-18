@@ -116,9 +116,13 @@ jobs:
           - { os: ubuntu-latest, python_version: "3.12" }
           - { os: ubuntu-latest, python_version: "3.13" }
           - { os: ubuntu-latest, python_version: "3.14" }
-          # macOS + Windows: min and max supported.
+          # macOS arm64 (Apple Silicon)
           - { os: macos-latest, python_version: "3.11" }
           - { os: macos-latest, python_version: "3.13" }
+          # macOS x86_64 (Intel)
+          - { os: macos-15-intel, python_version: "3.11" }
+          - { os: macos-15-intel, python_version: "3.13" }
+          # Windows
           - { os: windows-latest, python_version: "3.11" }
           - { os: windows-latest, python_version: "3.13" }
     runs-on: ${{ matrix.os }}
