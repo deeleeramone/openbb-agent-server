@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator
 from pathlib import Path
 
 import pytest
@@ -64,40 +64,10 @@ def settings_env(
     return AgentServerSettings()
 
 
-def _close_services() -> None:
-    """Close any open stores/engines before dropping references."""
-    from openbb_agent_server.memory.sqlite_store import SqliteMemoryStore
-    from openbb_agent_server.persistence.sqlite_store import SqliteHistoryStore
-    from openbb_agent_server.runtime import services
-    from openbb_agent_server.runtime.pdf_store import PdfStore
-
-    try:
-        mem = services.get_memory()
-    except Exception:
-        mem = None
-    if isinstance(mem, SqliteMemoryStore):
-        mem.close()
-
-    try:
-        hist = services.get_history()
-    except Exception:
-        hist = None
-    if isinstance(hist, SqliteHistoryStore):
-        hist._engine.sync_engine.dispose()
-
-    pdf = services.get_pdf_store()
-    if isinstance(pdf, PdfStore):
-        if pdf._vec_conn is not None:
-            pdf._vec_conn.close()
-        pdf._engine.sync_engine.dispose()
-
-    ws = services.get_widget_store()
-    if ws is not None and hasattr(ws, "_engine"):
-        ws._engine.sync_engine.dispose()
-
-
-@pytest.fixture(autouse=True)
-def _isolate_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Iterator[None]:
+@pytest_asyncio.fixture(autouse=True)
+async def _isolate_env(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> AsyncIterator[None]:
     """Isolate the test from the host environment and global services."""
     from openbb_agent_server.runtime import canvas, services
 
@@ -110,10 +80,8 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Iterator[No
     monkeypatch.setenv("OPENBB_AGENT_RERANKER_PROVIDER", "")
     monkeypatch.setenv("OPENBB_AGENT_TRANSLATION_PROVIDER", "")
     monkeypatch.setenv("OPENBB_AGENT_PRUNE_INTERVAL_HOURS", "0")
-    _close_services()
-    services.reset()
+    await services.areset()
     canvas.reset_canvas()
     yield
-    _close_services()
-    services.reset()
+    await services.areset()
     canvas.reset_canvas()

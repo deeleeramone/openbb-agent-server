@@ -32,7 +32,7 @@ async def store() -> AsyncIterator[WidgetDataStore]:
     async with s._engine.begin() as conn:
         await conn.run_sync(m.Base.metadata.create_all)
     yield s
-    await s._engine.dispose()
+    await s.aclose()
 
 
 def test_slugify_empty_yields_default() -> None:
@@ -746,7 +746,7 @@ async def test_query_rejects_postgres_dialect() -> None:
                 sql="SELECT 1",
             )
     finally:
-        await store._engine.dispose()
+        await store.aclose()
 
 
 @pytest.mark.asyncio

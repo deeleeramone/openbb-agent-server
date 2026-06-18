@@ -42,7 +42,7 @@ async def widget_store() -> AsyncIterator[WidgetDataStore]:
         yield s
     finally:
         services.reset()
-        await s._engine.dispose()
+        await s.aclose()
 
 
 async def _get_tool(name: str) -> Any:

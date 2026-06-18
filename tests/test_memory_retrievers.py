@@ -42,7 +42,7 @@ async def widget_store() -> AsyncIterator[WidgetDataStore]:
     try:
         yield s
     finally:
-        await s._engine.dispose()
+        await s.aclose()
 
 
 @pytest.fixture

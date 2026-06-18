@@ -106,8 +106,63 @@ def get_checkpointer() -> Any:
     return _services.checkpointer
 
 
+async def areset() -> None:
+    """Close and forget all bound services (async version).
+
+    Properly ``await``-disposes every async engine so that
+    ``aiosqlite.Connection`` objects are closed cleanly.
+    """
+    import asyncio
+
+    from openbb_agent_server.memory.sqlite_store import SqliteMemoryStore
+    from openbb_agent_server.persistence.sqlite_store import SqliteHistoryStore
+    from openbb_agent_server.runtime.pdf_store import PdfStore
+    from openbb_agent_server.runtime.widget_store import WidgetDataStore
+
+    mem = _services.memory
+    if isinstance(mem, SqliteMemoryStore):
+        mem.close()
+
+    hist = _services.history
+    if isinstance(hist, SqliteHistoryStore):
+        await hist.aclose()
+
+    pdf = _services.extra.get("pdf_store")
+    if isinstance(pdf, PdfStore):
+        await pdf.aclose()
+
+    ws = _services.extra.get("widget_store")
+    if isinstance(ws, WidgetDataStore):
+        await ws.aclose()
+
+    # Give aiosqlite's background threads time to process close messages.
+    await asyncio.sleep(0)
+
+    _services.history = None
+    _services.memory = None
+    _services.checkpointer = None
+    _services.extra.clear()
+
+
 def reset() -> None:
-    """Test-only: forget all bound services."""
+    """Forget all bound services (sync).
+
+    Closes synchronous ``sqlite3.Connection`` objects held by the
+    memory store and PDF store. Does **not** dispose async engines —
+    use :func:`areset` for that. Nulls all service slots so subsequent
+    ``get_*`` calls fail cleanly.
+    """
+    from openbb_agent_server.memory.sqlite_store import SqliteMemoryStore
+    from openbb_agent_server.runtime.pdf_store import PdfStore
+
+    mem = _services.memory
+    if isinstance(mem, SqliteMemoryStore):
+        mem.close()
+
+    pdf = _services.extra.get("pdf_store")
+    if isinstance(pdf, PdfStore) and pdf._vec_conn is not None:
+        pdf._vec_conn.close()
+
     _services.history = None
     _services.memory = None
     _services.checkpointer = None

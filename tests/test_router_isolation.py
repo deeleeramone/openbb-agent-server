@@ -60,7 +60,5 @@ def test_bearer_static_round_trip_with_real_principal(
 def test_unauthenticated_request_is_401(
     alice_client: TestClient,
 ) -> None:
-    raw = TestClient(alice_client.app)
-    with raw:
-        resp = raw.get("/v1/me")
+    resp = alice_client.get("/v1/me", headers={"Authorization": ""})
     assert resp.status_code == 401

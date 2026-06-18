@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
+from collections.abc import AsyncIterator
 from pathlib import Path
 
 import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
 
 from openbb_agent_server.app.app import create_app
@@ -15,9 +16,11 @@ from openbb_agent_server.runtime import services
 from openbb_agent_server.runtime.principal import UserPrincipal
 
 
-@pytest.fixture
-def client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Iterator[TestClient]:
-    services.reset()
+@pytest_asyncio.fixture
+async def client(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> AsyncIterator[TestClient]:
+    await services.areset()
     monkeypatch.setenv("OPENBB_AGENT_AUTH_BACKEND", "none")
     monkeypatch.setenv(
         "OPENBB_AGENT_DB_URL", f"sqlite+aiosqlite:///{tmp_path / 'h.db'}"
@@ -30,6 +33,7 @@ def client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Iterator[TestClie
     monkeypatch.setenv("OPENBB_AGENT_FAKE_RESPONSES", json.dumps(["A simple reply."]))
     with TestClient(create_app(AgentServerSettings())) as client:
         yield client
+    await services.areset()
 
 
 def test_trace_endpoint_returns_full_bundle(client: TestClient) -> None:
@@ -60,11 +64,12 @@ def test_trace_endpoint_404_for_unknown_trace(client: TestClient) -> None:
     assert resp.status_code == 404
 
 
-def test_trace_endpoint_404_for_other_users_trace(
+@pytest.mark.asyncio
+async def test_trace_endpoint_404_for_other_users_trace(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    services.reset()
+    await services.areset()
     monkeypatch.setenv("OPENBB_AGENT_AUTH_BACKEND", "bearer_static")
     monkeypatch.setenv(
         "OPENBB_AGENT_DB_URL", f"sqlite+aiosqlite:///{tmp_path / 'shared.db'}"
@@ -87,17 +92,19 @@ def test_trace_endpoint_404_for_other_users_trace(
             json={"messages": [{"role": "human", "content": "hi"}]},
         )
         alice_trace_id = alice_resp.headers["X-Server-Trace-ID"]
+    await services.areset()
 
-        monkeypatch.setenv(
-            "OPENBB_AGENT_AUTH_CONFIG",
-            '{"token": "bob", "user_id": "bob", "scopes": ["agent:query"]}',
-        )
-        monkeypatch.setenv("OPENBB_AGENT_AUTH_BEARER", "bob")
-        services.reset()
-        with TestClient(create_app(AgentServerSettings())) as bob_client:
-            bob_client.headers["Authorization"] = "Bearer bob"
-            resp = bob_client.get(f"/v1/traces/{alice_trace_id}")
-            assert resp.status_code == 404
+    monkeypatch.setenv(
+        "OPENBB_AGENT_AUTH_CONFIG",
+        '{"token": "bob", "user_id": "bob", "scopes": ["agent:query"]}',
+    )
+    monkeypatch.setenv("OPENBB_AGENT_AUTH_BEARER", "bob")
+
+    with TestClient(create_app(AgentServerSettings())) as bob_client:
+        bob_client.headers["Authorization"] = "Bearer bob"
+        resp = bob_client.get(f"/v1/traces/{alice_trace_id}")
+        assert resp.status_code == 404
+    await services.areset()
 
 
 def test_usage_endpoint_returns_aggregates(client: TestClient) -> None:

@@ -230,7 +230,7 @@ async def widget_store_in_services() -> Any:
         yield s
     finally:
         services.reset()
-        await s._engine.dispose()
+        await s.aclose()
 
 
 @pytest.mark.asyncio

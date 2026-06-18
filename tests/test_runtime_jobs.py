@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import gc
 import warnings
 
 import pytest
@@ -177,11 +176,13 @@ async def test_cancel_before_first_step_with_factory_no_warning(
             assert reg.cancel(job_id) is True
             assert reg.status(job_id)["state"] == JobState.CANCELED.value
 
-        gc.collect()
-        coro_warnings = [w for w in recorded if "coroutine" in str(w.message).lower()]
-        assert coro_warnings == [], (
-            f"factory path leaked un-awaited coroutines: {coro_warnings}"
-        )
+        # Yield to the event loop so any un-awaited coroutine warnings fire.
+        await asyncio.sleep(0)
+
+    coro_warnings = [w for w in recorded if "coroutine" in str(w.message).lower()]
+    assert coro_warnings == [], (
+        f"factory path leaked un-awaited coroutines: {coro_warnings}"
+    )
 
 
 @pytest.mark.asyncio

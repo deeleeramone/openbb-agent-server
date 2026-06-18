@@ -97,6 +97,10 @@ class WidgetDataStore:
             expire_on_commit=False,
         )
 
+    async def aclose(self) -> None:
+        """Dispose of the engine and release its connection pool."""
+        await self._engine.dispose()
+
     async def record(
         self,
         *,
