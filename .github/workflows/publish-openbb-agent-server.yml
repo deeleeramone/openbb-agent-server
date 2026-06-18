@@ -92,12 +92,12 @@ jobs:
         with:
           python-version: "3.11"
 
-      - run: python -m pip install --upgrade pip uv
+      - uses: astral-sh/setup-uv@v6
 
       - name: Build sdist + wheel
         run: uv build
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: openbb-agent-server-dist
           path: dist/
@@ -135,7 +135,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: python -m pip install --upgrade pip uv
+      - uses: astral-sh/setup-uv@v6
 
       - name: Install Python ${{ matrix.python_version }} via uv
         # ``actions/setup-python``'s macOS interpreters are built
@@ -151,15 +151,10 @@ jobs:
           uv pip install --group dev
 
       - name: Install ffmpeg
-        # The _media audio helpers shell out to real ffmpeg / ffprobe;
-        # the tests run the real binaries, so CI needs them on $PATH or
-        # the ffmpeg code paths drop below 100% coverage.
-        run: |
-          case "$RUNNER_OS" in
-            Linux)   sudo apt-get update && sudo apt-get install -y ffmpeg ;;
-            macOS)   brew install ffmpeg ;;
-            Windows) choco install ffmpeg --no-progress --yes ;;
-          esac
+        uses: FedericoCarboni/setup-ffmpeg@v3
+        with:
+          ffmpeg-version: release
+          github-token: ${{ github.token }}
 
       - name: Run unit tests
         # The 100% coverage gate runs on every OS — Linux, macOS and
@@ -176,7 +171,7 @@ jobs:
     permissions:
       id-token: write   # required for PyPI OIDC trusted publishing
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: openbb-agent-server-dist
           path: dist

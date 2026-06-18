@@ -231,6 +231,7 @@ convention = "numpy"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 addopts = "-q --strict-markers"
 testpaths = ["tests"]
 # Silence upstream warnings from deps we don't own. These are fired at
