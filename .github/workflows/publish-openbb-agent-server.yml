@@ -154,11 +154,16 @@ jobs:
           uv pip install -e ".[all]"
           uv pip install --group dev
 
-      - name: Install ffmpeg
+      - name: Install ffmpeg (cached)
+        if: runner.os != 'macOS' || runner.arch != 'ARM64'
         uses: FedericoCarboni/setup-ffmpeg@v3
         with:
           ffmpeg-version: release
           github-token: ${{ github.token }}
+
+      - name: Install ffmpeg (macOS arm64)
+        if: runner.os == 'macOS' && runner.arch == 'ARM64'
+        run: brew install ffmpeg
 
       - name: Run unit tests
         # The 100% coverage gate runs on every OS — Linux, macOS and
