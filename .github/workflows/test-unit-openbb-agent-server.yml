@@ -123,23 +123,38 @@ jobs:
           uv pip install -e ".[all]"
           uv pip install --group dev
 
-      - name: Install ffmpeg (cached)
-        if: runner.os != 'macOS' || runner.arch != 'ARM64'
-        uses: FedericoCarboni/setup-ffmpeg@v3
-        with:
-          ffmpeg-version: release
-          github-token: ${{ github.token }}
-
-      - name: Cache Homebrew downloads (macOS arm64)
-        if: runner.os == 'macOS' && runner.arch == 'ARM64'
+      - name: Cache ffmpeg
+        id: cache-ffmpeg
         uses: actions/cache@v4
         with:
-          path: ~/Library/Caches/Homebrew/downloads
-          key: brew-ffmpeg-${{ runner.os }}-${{ runner.arch }}
+          path: |
+            ~/ffmpeg-cache
+          key: ffmpeg-${{ runner.os }}-${{ runner.arch }}
 
-      - name: Install ffmpeg (macOS arm64)
-        if: runner.os == 'macOS' && runner.arch == 'ARM64'
-        run: brew install --force ffmpeg
+      - name: Install ffmpeg
+        if: steps.cache-ffmpeg.outputs.cache-hit != 'true'
+        run: |
+          case "$RUNNER_OS" in
+            Linux)
+              sudo apt-get update && sudo apt-get install -y ffmpeg
+              mkdir -p ~/ffmpeg-cache/bin
+              cp "$(which ffmpeg)" "$(which ffprobe)" ~/ffmpeg-cache/bin/
+              ;;
+            macOS)
+              brew install ffmpeg
+              mkdir -p ~/ffmpeg-cache/bin
+              cp "$(which ffmpeg)" "$(which ffprobe)" ~/ffmpeg-cache/bin/
+              ;;
+            Windows)
+              choco install ffmpeg --no-progress --yes
+              mkdir -p ~/ffmpeg-cache/bin
+              cp "$(which ffmpeg.exe)" "$(which ffprobe.exe)" ~/ffmpeg-cache/bin/
+              ;;
+          esac
+
+      - name: Add cached ffmpeg to PATH
+        if: steps.cache-ffmpeg.outputs.cache-hit == 'true'
+        run: echo "$HOME/ffmpeg-cache/bin" >> "$GITHUB_PATH"
 
       - name: Run unit tests
         # The 100% coverage gate runs on every OS — Linux, macOS and
