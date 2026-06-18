@@ -193,6 +193,12 @@ class EmbeddedRuntime:
                 await self._checkpointer_provider.close(self._checkpointer)
         finally:
             if self._stores is not None:
+                if self._stores.memory is not None:
+                    self._stores.memory.close()
+                if self._stores.pdf_store is not None:
+                    await self._stores.pdf_store.aclose()
+                if self._stores.widget_store is not None:
+                    await self._stores.widget_store._engine.dispose()
                 await self._stores.history.aclose()
             services.reset()
             self._started = False

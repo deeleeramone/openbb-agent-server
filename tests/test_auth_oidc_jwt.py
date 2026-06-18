@@ -85,6 +85,7 @@ def jwks_server(keypair: tuple[bytes, bytes]) -> Iterator[str]:
         yield f"http://127.0.0.1:{port}/jwks.json"
     finally:
         server.shutdown()
+        server.server_close()
 
 
 def _request(headers: dict[str, str]) -> Request:

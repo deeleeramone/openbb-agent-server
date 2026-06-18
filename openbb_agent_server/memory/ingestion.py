@@ -183,7 +183,8 @@ def _load_via_loader(path: str, ext: str) -> str | None:
     from html.parser import HTMLParser
 
     try:
-        text = _decode_bytes_to_text(open(path, "rb").read())  # noqa: SIM115
+        with open(path, "rb") as fh:
+            text = _decode_bytes_to_text(fh.read())
 
         if ext == ".csv":
             reader = csv.DictReader(io.StringIO(text))
