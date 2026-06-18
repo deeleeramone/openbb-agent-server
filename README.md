@@ -1,8 +1,8 @@
 # openbb-agent-server
 
 Pluggable, multi-tenant agent backend that speaks the [OpenBB Workspace
-custom-agent SSE protocol][workspace-protocol] and runs the agent loop
-on top of the [LangChain DeepAgents harness][deepagents]. One process
+custom-agent SSE protocol][https://docs.openbb.co/workspace/developers/agents-integration] and runs the agent loop
+on top of the [LangChain DeepAgents harness][https://docs.langchain.com/oss/python/deepagents/overview]. One process
 hosts many agent profiles; auth, model provider, tools, sub-agents,
 middleware, checkpointer, and persistence are independent plugin axes
 — anything can be swapped without forking the package.
@@ -18,6 +18,9 @@ The default setup uses 100% free tokens and embedding models available from [NVI
 ## Install & run
 
 ```bash
+# from PyPI
+pip install openbb-agent-server
+
 # from a checkout of this repository
 pip install -e '.[workspace-mcp]'
 # add or combine more extras: [anthropic] [openai] [bedrock]
