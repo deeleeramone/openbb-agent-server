@@ -1,8 +1,8 @@
 # openbb-agent-server
 
 Pluggable, multi-tenant agent backend that speaks the [OpenBB Workspace
-custom-agent SSE protocol][https://docs.openbb.co/workspace/developers/agents-integration] and runs the agent loop
-on top of the [LangChain DeepAgents harness][https://docs.langchain.com/oss/python/deepagents/overview]. One process
+custom-agent SSE protocol](https://docs.openbb.co/workspace/developers/agents-integration) and runs the agent loop
+on top of the [LangChain DeepAgents harness](https://docs.langchain.com/oss/python/deepagents/overview). One process
 hosts many agent profiles; auth, model provider, tools, sub-agents,
 middleware, checkpointer, and persistence are independent plugin axes
 — anything can be swapped without forking the package.
