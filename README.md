@@ -7,6 +7,8 @@ hosts many agent profiles; auth, model provider, tools, sub-agents,
 middleware, checkpointer, and persistence are independent plugin axes
 — anything can be swapped without forking the package.
 
+<img width="1580" height="834" alt="openbb-agent-server-screenshot" src="https://github.com/user-attachments/assets/f6ed834a-4232-4cbb-a039-275f30dafad9" />
+
 The full OpenBB Platform — every command across every installed
 provider — is reachable via the optional `mcp_local` tool source,
 which spawns the
