@@ -12,9 +12,9 @@ import threading
 from typing import Any
 
 import sqlite_vec
-from langchain_community.vectorstores import SQLiteVec
 from langchain_core.embeddings import Embeddings
 
+from openbb_agent_server._vendor.sqlitevec import SQLiteVec
 from openbb_agent_server.memory.embeddings import HashEmbeddings
 from openbb_agent_server.memory.reranker import NvidiaReranker
 from openbb_agent_server.memory.store import Memory, MemoryStore

@@ -27,7 +27,7 @@ pip install openbb-agent-server
 pip install -e '.[workspace-mcp]'
 # add or combine more extras: [anthropic] [openai] [bedrock]
 #                             [vertex] [google_genai] [groq]
-#                             [snowflake] [tavily] [postgres]
+#                             [tavily] [postgres]
 #                             [pywry]  (desktop chat embedding)
 
 export NVIDIA_API_KEY=...

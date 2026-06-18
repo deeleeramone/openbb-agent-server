@@ -4,7 +4,7 @@
 
 - **Python 3.11+** (`requires-python = ">=3.11,<4"`).
 - An **NVIDIA API key** for production-quality embeddings, reranking, and the NIM-backed multimodal tools (vision / audio). Without one the server falls back to deterministic hash embeddings and the NIM-backed tools quietly skip registration. Get one at [build.nvidia.com](https://build.nvidia.com).
-- A **model-provider key** for whichever chat model you run (Anthropic / OpenAI / Bedrock / Vertex / Groq / Snowflake Cortex). The default profile uses an NVIDIA-hosted model, so an NVIDIA key alone is enough to start.
+- A **model-provider key** for whichever chat model you run (Anthropic / OpenAI / Bedrock / Vertex / Groq). The default profile uses an NVIDIA-hosted model, so an NVIDIA key alone is enough to start.
 
 ## Install
 
@@ -24,7 +24,7 @@ cd openbb-agent-server
 uv sync
 ```
 
-`langchain-nvidia-ai-endpoints`, `langchain-community`, `langchain-text-splitters`, and `sqlite-vec` are base dependencies — the default model and the memory pipeline work with no extras installed.
+`langchain-nvidia-ai-endpoints`, `langchain-text-splitters`, and `sqlite-vec` are base dependencies — the default model and the memory pipeline work with no extras installed.
 
 ## Optional extras
 
@@ -39,14 +39,13 @@ Install only what your deployment needs. Each model provider is opt-in so a mini
 | `groq` | `langchain-groq` | Groq-hosted models |
 | `postgres` | `psycopg[binary]`, `pgvector`, `langgraph-checkpoint-postgres` | Postgres history + the Postgres checkpointer (multi-worker prod) |
 | `tavily` | `tavily-python` | Tavily web-search backend (better quality, needs an API key) |
-| `snowflake` | `snowflake-connector-python`, `sqlglot` | Snowflake Cortex + catalog tool source (read-only enforced) |
 | `pywry` | `pywry` | The ACP desktop canvas (`openbb-agent-canvas`) — **not** in `[all]` |
 | `workspace-mcp` | `openbb-workspace-mcp` (GitHub) | In-process Workspace MCP mount at `/mcp/workspace` |
 | `all` | every extra **except** `pywry` | Everything for a server deployment |
 
 ```sh
 pip install -e ".[anthropic]"            # one provider
-pip install -e ".[postgres,snowflake]"   # combine
+pip install -e ".[postgres,tavily]"      # combine
 pip install -e ".[all]"                  # full server stack (no pywry)
 pip install -e ".[pywry]"                # the desktop canvas
 ```

@@ -553,7 +553,7 @@ async def test_pdf_extract_uses_ready_store() -> None:
     assert out["total_pages"] == 2
     assert len(out["pages"]) == 2
     assert any(e["type"] == "citations" for e in sink)
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -575,7 +575,7 @@ async def test_pdf_extract_store_error_status() -> None:
     with run_context.bind(ctx):
         out = await extract.ainvoke({"name": "bad.pdf"})
     assert "failed background ingestion" in out["error"]
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -643,7 +643,7 @@ async def test_pdf_extract_polls_until_ready(
     with run_context.bind(ctx), emit.bind_writer(sink.append):
         out = await extract.ainvoke({"name": "r.pdf"})
     assert out["total_pages"] == 2
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -745,7 +745,7 @@ async def test_search_pdf_with_matched_uploads() -> None:
         hits = await search.ainvoke({"query": "revenue"})
     assert hits and hits[0]["name"] == "fin.pdf"
     assert any(e["type"] == "citations" for e in sink)
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -841,7 +841,7 @@ async def test_get_pdf_outline_ready_fast_path() -> None:
         out = await outline.ainvoke({"name": "o.pdf"})
     assert out["total_pages"] == 2
     assert "toc" in out
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -862,7 +862,7 @@ async def test_get_pdf_outline_error_status() -> None:
     with run_context.bind(ctx):
         out = await outline.ainvoke({"name": "bad.pdf"})
     assert "failed background ingestion" in out["error"]
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -898,7 +898,7 @@ async def test_get_pdf_outline_polls_until_ready(
     with run_context.bind(ctx), emit.bind_writer(sink.append):
         out = await outline.ainvoke({"name": "p.pdf"})
     assert out["total_pages"] == 2
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio

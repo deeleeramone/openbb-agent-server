@@ -738,12 +738,15 @@ async def test_query_rejects_postgres_dialect() -> None:
         name = "postgresql"
 
     store._engine.dialect = _FakeDialect()  # type: ignore[assignment]
-    with pytest.raises(RuntimeError, match="not supported"):
-        await store.query(
-            principal=_principal(),
-            conversation_id="c1",
-            sql="SELECT 1",
-        )
+    try:
+        with pytest.raises(RuntimeError, match="not supported"):
+            await store.query(
+                principal=_principal(),
+                conversation_id="c1",
+                sql="SELECT 1",
+            )
+    finally:
+        await store._engine.dispose()
 
 
 @pytest.mark.asyncio

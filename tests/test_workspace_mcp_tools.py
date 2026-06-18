@@ -42,8 +42,8 @@ async def test_returns_one_stub_tool_per_agent_tool_in_ctx() -> None:
             tools=(
                 {
                     "name": "list_databases",
-                    "server_id": "snowflake-mcp",
-                    "description": "List Snowflake databases",
+                    "server_id": "example-mcp",
+                    "description": "List databases",
                     "input_schema": {"type": "object", "properties": {}},
                 },
                 {
@@ -67,8 +67,8 @@ async def test_returns_one_stub_tool_per_agent_tool_in_ctx() -> None:
     )
     names = sorted(t.name for t in tools)
     assert names == [
+        "mcp:example-mcp:list_databases",
         "mcp:openbb-mcp:get_widget_data",
-        "mcp:snowflake-mcp:list_databases",
     ]
 
 
@@ -132,7 +132,7 @@ def test_adapter_routes_mcp_prefix_into_function_call_sse() -> None:
                 "content": "",
                 "tool_calls": [
                     {
-                        "name": f"{WORKSPACE_MCP_TOOL_PREFIX}snowflake-mcp:list_databases",
+                        "name": f"{WORKSPACE_MCP_TOOL_PREFIX}example-mcp:list_databases",
                         "args": {"limit": 5},
                         "id": "call-1",
                     }
@@ -146,7 +146,7 @@ def test_adapter_routes_mcp_prefix_into_function_call_sse() -> None:
     assert isinstance(fc, FunctionCallSSE)
     assert fc.data.function == "execute_agent_tool"
     assert fc.data.input_arguments == {
-        "server_id": "snowflake-mcp",
+        "server_id": "example-mcp",
         "name": "list_databases",
         "arguments": {"limit": 5},
     }

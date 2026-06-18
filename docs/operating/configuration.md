@@ -57,7 +57,7 @@ See [auth.md](auth.md) for per-backend config keys.
 | `model.name` | `nvidia/nemotron-3-super-120b-a12b` |
 | `model.config` | `{temperature=0.4, max_completion_tokens=8192, top_p=0.95}` |
 
-Other providers: `anthropic`, `openai`, `openai_compat`, `bedrock`, `vertex`, `google_genai`, `groq`, `snowflake`, `fake`. Each is an optional install extra; see [plugin-system.md](../developing/plugin-system.md#modelprovider).
+Other providers: `anthropic`, `openai`, `openai_compat`, `bedrock`, `vertex`, `google_genai`, `groq`, `fake`. Each is an optional install extra; see [plugin-system.md](../developing/plugin-system.md#modelprovider).
 
 ## Plugin selection
 
@@ -180,7 +180,6 @@ Tools and model providers read keys from the environment in this order: per-requ
 | NVIDIA NIM | `NVIDIA_API_KEY` |
 | Tavily web-search backend | `TAVILY_API_KEY` |
 | AWS Bedrock | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` |
-| Snowflake | `SNOWFLAKE_ACCOUNT`, `SNOWFLAKE_USER`, `SNOWFLAKE_PASSWORD` |
 | Identity-hashing pepper | `OPENBB_AGENT_USER_ID_PEPPER` |
 
 The agent server never logs or persists secrets. Identity emails are hashed via `OPENBB_AGENT_USER_ID_PEPPER` before they appear in any persisted row.

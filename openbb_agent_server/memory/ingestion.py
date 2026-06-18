@@ -176,35 +176,48 @@ def _decode_bytes_to_text(raw: bytes) -> str:
 
 
 def _load_via_loader(path: str, ext: str) -> str | None:
-    """Route a tempfile through the matching LangChain document loader."""
-    from langchain_community.document_loaders import (
-        BSHTMLLoader,
-        CSVLoader,
-        JSONLoader,
-        TextLoader,
-    )
+    """Parse a tempfile into plaintext using stdlib readers."""
+    import csv
+    import io
+    import json
+    from html.parser import HTMLParser
 
-    loader: Any
     try:
+        text = _decode_bytes_to_text(open(path, "rb").read())  # noqa: SIM115
+
         if ext == ".csv":
-            loader = CSVLoader(file_path=path)
-        elif ext in {".tsv", ".psv"}:
+            reader = csv.DictReader(io.StringIO(text))
+            return "\n".join(
+                " | ".join(f"{k}: {v}" for k, v in row.items()) for row in reader
+            )
+
+        if ext in {".tsv", ".psv"}:
             sep = "\t" if ext == ".tsv" else "|"
-            loader = CSVLoader(file_path=path, csv_args={"delimiter": sep})
-        elif ext in {".html", ".htm"}:
-            loader = BSHTMLLoader(file_path=path)
-        elif ext == ".json":
-            loader = JSONLoader(file_path=path, jq_schema=".", text_content=False)
-        else:
-            loader = TextLoader(file_path=path, autodetect_encoding=True)
-        docs = loader.load()
+            reader = csv.DictReader(io.StringIO(text), delimiter=sep)
+            return "\n".join(
+                " | ".join(f"{k}: {v}" for k, v in row.items()) for row in reader
+            )
+
+        if ext in {".html", ".htm"}:
+            parts: list[str] = []
+
+            class _Strip(HTMLParser):
+                def handle_data(self, data: str) -> None:
+                    parts.append(data)
+
+            _Strip().feed(text)
+            return " ".join(parts)
+
+        if ext == ".json":
+            return json.dumps(json.loads(text), indent=2)
+
+        return text
     except Exception:
         return None
-    return "\n\n".join(d.page_content for d in docs if d.page_content)
 
 
 def _decode_file_text(name: str, mime: str, b64: str | None) -> str | None:
-    """Decode an uploaded file into plaintext using LangChain document loaders."""
+    """Decode an uploaded file into plaintext."""
     if not b64:
         return None
     lower_name = name.lower()

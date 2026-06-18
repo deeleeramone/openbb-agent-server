@@ -112,7 +112,7 @@ async def test_engine_property_and_status_unknown() -> None:
     assert store.engine is not None
     st = await store.status(principal=_principal(), name="missing.pdf")
     assert st is None
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -123,7 +123,7 @@ async def test_init_with_external_engine_skips_pragmas() -> None:
     eng = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
     store = PdfStore("sqlite+aiosqlite:///:memory:", engine=eng)
     assert store.engine is eng
-    await eng.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -132,7 +132,7 @@ async def test_get_pages_returns_none_when_not_ready() -> None:
     await _create_schema(store)
     pages = await store.get_pages(principal=_principal(), name="x.pdf")
     assert pages is None
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -158,7 +158,7 @@ async def test_ingest_status_get_pages_round_trip() -> None:
         principal=p, name="rt.pdf", data_base64=pdf_b64, page_range=(2, 2)
     )
     assert ranged is not None and len(ranged) == 1 and ranged[0]["page"] == 2
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -173,7 +173,7 @@ async def test_ingest_skips_when_already_ready() -> None:
     store._tasks.clear()
     await store.ingest_async(principal=p, name="a.pdf", data_base64=pdf_b64)
     assert not store._tasks
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -201,14 +201,14 @@ async def test_ingest_skips_when_in_flight() -> None:
     assert len(store._tasks) == 1
     release.set()
     await store.await_pending()
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
 async def test_await_pending_noop_when_empty() -> None:
     store = PdfStore("sqlite+aiosqlite:///:memory:")
     await store.await_pending()
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -223,7 +223,7 @@ async def test_ingest_records_error_on_parse_failure() -> None:
     st = await store.status(principal=p, name="bad.pdf", data_base64=bad_b64)
     assert st is not None and st["status"] == "error"
     assert st["error"]
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -247,7 +247,7 @@ async def test_ingest_reuses_existing_pending_row() -> None:
     )
     st = await store.status(principal=p, name="bad.pdf", data_base64=bad_b64)
     assert st is not None and st["status"] == "ready"
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -270,7 +270,7 @@ async def test_ingest_background_returns_when_existing_ready() -> None:
     )
     st = await store.status(principal=p, name="a.pdf", data_base64=pdf_b64)
     assert st is not None and st["status"] == "ready"
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -279,7 +279,7 @@ async def test_substring_search_no_documents() -> None:
     await _create_schema(store)
     hits = await store.search(principal=_principal(), query="anything")
     assert hits == []
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -287,7 +287,7 @@ async def test_search_blank_query_returns_empty() -> None:
     store = PdfStore("sqlite+aiosqlite:///:memory:")
     await _create_schema(store)
     assert await store.search(principal=_principal(), query="   ") == []
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -303,7 +303,7 @@ async def test_substring_search_matches_page_text() -> None:
     assert hits and hits[0]["name"] == "s.pdf"
     assert hits[0]["score"] == 1.0
     assert await store.search(principal=p, query="zzzznomatch", k=5) == []
-    await store.engine.dispose()
+    await store.aclose()
 
 
 class _StubEmbeddings(Embeddings):
@@ -341,9 +341,7 @@ async def test_vector_index_and_search(tmp_path: Path) -> None:
     assert all("score" in h and "page" in h for h in hits)
     other = await store.search(principal=_principal("other"), query="revenue", k=3)
     assert other == []
-    await store.engine.dispose()
-    if store._vec_conn is not None:
-        store._vec_conn.close()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -376,9 +374,7 @@ async def test_vector_search_dedup_and_k_limit(tmp_path: Path) -> None:
     )
     hits = await store.search(principal=p, query="anything", k=2)
     assert [h["page"] for h in hits] == [1, 2]
-    await store.engine.dispose()
-    if store._vec_conn is not None:
-        store._vec_conn.close()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -392,7 +388,7 @@ async def test_substring_search_k_limit() -> None:
     await store.await_pending()
     hits = await store.search(principal=p, query="keyword", k=1)
     assert len(hits) == 1
-    await store.engine.dispose()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -412,9 +408,7 @@ async def test_search_falls_back_when_ann_raises(tmp_path: Path) -> None:
     store._vec.similarity_search_with_score = _boom  # type: ignore[union-attr]
     hits = await store.search(principal=p, query="keyword", k=3)
     assert hits and hits[0]["name"] == "f.pdf"
-    await store.engine.dispose()
-    if store._vec_conn is not None:
-        store._vec_conn.close()
+    await store.aclose()
 
 
 @pytest.mark.asyncio
@@ -434,15 +428,15 @@ async def test_vector_index_error_is_swallowed(tmp_path: Path) -> None:
     await store.await_pending()
     st = await store.status(principal=p, name="i.pdf", data_base64=pdf_b64)
     assert st is not None and st["status"] == "ready"
-    await store.engine.dispose()
-    if store._vec_conn is not None:
-        store._vec_conn.close()
+    await store.aclose()
 
 
-def test_index_pages_sync_returns_when_no_vec() -> None:
+@pytest.mark.asyncio
+async def test_index_pages_sync_returns_when_no_vec() -> None:
     """``_index_pages_sync`` no-ops when no vector store is configured."""
     store = PdfStore("sqlite+aiosqlite:///:memory:")
     store._index_pages_sync(doc_id=1, user_id="u", name="x.pdf", pages=[])
+    await store.aclose()
 
 
 def test_parse_pdf_sync_from_base64() -> None:

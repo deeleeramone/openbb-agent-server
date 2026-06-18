@@ -451,9 +451,8 @@ class AgentServerSettings(BaseSettings):
                         "``qwen/qwen3-coder-480b-a35b-instruct`` (480B "
                         "MoE, 35B active). Tuned for OpenBB Platform "
                         "scripting, SQL drafting, and quantitative "
-                        "snippets — pair with the ``snowflake`` or "
-                        "``mcp_local`` tool sources for end-to-end "
-                        "execution."
+                        "snippets — pair with the ``mcp_local`` tool "
+                        "source for end-to-end execution."
                     ),
                 },
                 "model": {

@@ -1,6 +1,6 @@
 # Memory
 
-Per-user cross-thread vector memory. Stored in `langchain_community.vectorstores.SQLiteVec` tables on the same file as the rest of persistence. For the read/write/recall API see [memory-and-recall.md](../guides/memory-and-recall.md).
+Per-user cross-thread vector memory. Stored in `sqlite-vec` ANN tables on the same file as the rest of persistence. For the read/write/recall API see [memory-and-recall.md](../guides/memory-and-recall.md).
 
 ## Configuration
 

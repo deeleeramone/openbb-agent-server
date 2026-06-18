@@ -502,6 +502,32 @@ async def test_custom_artifact_html_passthrough() -> None:
 
 
 @pytest.mark.asyncio
+async def test_custom_artifact_code_passthrough() -> None:
+    out = await _drive(
+        DeepAgentEventAdapter(),
+        [
+            {
+                "type": "custom",
+                "data": {
+                    "type": "artifact",
+                    "artifact": {
+                        "type": "code",
+                        "uuid": "c1",
+                        "name": "Query",
+                        "description": "...",
+                        "content": "SELECT 1",
+                    },
+                },
+            }
+        ],
+    )
+    a = out[0]
+    assert isinstance(a, MessageArtifactSSE)
+    assert a.data.type == "code"
+    assert a.data.content == "SELECT 1"
+
+
+@pytest.mark.asyncio
 async def test_custom_artifact_markdown_is_coerced_to_text() -> None:
     """A markdown artifact type is coerced to text."""
     out = await _drive(
@@ -944,6 +970,27 @@ def test_build_artifact_chart_with_non_dict_plotly_falls_back_to_string_content(
     assert a.type == "chart"
     assert a.chart_params is None
     assert a.content == "x"
+
+
+def test_build_artifact_code_content_passes_through() -> None:
+    from openbb_agent_server.protocol.adapter import _build_artifact
+
+    a = _build_artifact({"type": "code", "content": "SELECT 1", "uuid": "c1"})
+    assert a.type == "code"
+    assert a.content == "SELECT 1"
+
+
+def test_build_artifact_code_none_content_becomes_empty_string() -> None:
+    from openbb_agent_server.protocol.adapter import _build_artifact
+
+    a = _build_artifact({"type": "code"})
+    assert a.content == ""
+
+
+def test_resolve_artifact_wire_type_code_passes_through() -> None:
+    from openbb_agent_server.protocol.adapter import _resolve_artifact_wire_type
+
+    assert _resolve_artifact_wire_type("code") == "code"
 
 
 def test_build_artifact_html_content_passes_through() -> None:

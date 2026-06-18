@@ -23,7 +23,6 @@ dependencies = [
     "deepagents>=0.5.0",
     "langchain>=1.0.0",
     "langchain-core>=1.0.0",
-    "langchain-community>=0.3",
     "langchain-text-splitters>=0.3",
     "langgraph>=1.0.0",
     "langchain-nvidia-ai-endpoints>=1.0.0",
@@ -55,10 +54,6 @@ postgres = [
 ]
 tavily = ["tavily-python>=0.5"]
 pywry = ["pywry>=2.0.4"]
-snowflake = [
-    "snowflake-connector-python>=3.10",
-    "sqlglot>=25.0",
-]
 # In-process Workspace MCP server. When installed, the agent server
 # mounts workspace-mcp at /mcp/workspace so operators do not need to
 # run a separate sidecar. Tracks main; pin to a SHA in your own
@@ -72,7 +67,7 @@ workspace-mcp = [
 ]
 
 all = [
-    "openbb-agent-server[anthropic,openai,bedrock,vertex,google_genai,groq,postgres,tavily,snowflake,workspace-mcp]",
+    "openbb-agent-server[anthropic,openai,bedrock,vertex,google_genai,groq,postgres,tavily,workspace-mcp]",
 ]
 
 [project.scripts]
@@ -101,7 +96,6 @@ vertex = "openbb_agent_server.plugins.models.vertex_provider:VertexProvider"
 google_genai = "openbb_agent_server.plugins.models.google_genai_provider:GoogleGenAIProvider"
 groq = "openbb_agent_server.plugins.models.groq_provider:GroqProvider"
 fake = "openbb_agent_server.plugins.models.fake_provider:FakeProvider"
-snowflake = "openbb_agent_server.plugins.models.snowflake_provider:SnowflakeProvider"
 
 [project.entry-points."openbb_agent_server.tools"]
 python_module = "openbb_agent_server.plugins.tools.python_module:PythonModuleToolSource"
@@ -116,7 +110,6 @@ inspect_widget_data = "openbb_agent_server.plugins.tools.inspect_widget_data:Ins
 pdf_extract = "openbb_agent_server.plugins.tools.pdf_extract:PdfExtractToolSource"
 artifacts = "openbb_agent_server.plugins.tools.artifacts:ArtifactsToolSource"
 dashboard = "openbb_agent_server.plugins.tools.dashboard:DashboardToolSource"
-snowflake = "openbb_agent_server.plugins.tools.snowflake_tools:SnowflakeToolSource"
 groq_audio = "openbb_agent_server.plugins.tools.groq_audio:GroqAudioToolSource"
 gemini_image = "openbb_agent_server.plugins.tools.gemini_image:GeminiImageToolSource"
 gemini_embeddings = "openbb_agent_server.plugins.tools.gemini_embeddings:GeminiEmbeddingsToolSource"
@@ -214,6 +207,8 @@ ignore = [
     "SIM105", "SIM117",
 ]
 "**/__init__.py" = ["F401"]
+# Vendored code — table names are internal identifiers, not user input.
+"openbb_agent_server/_vendor/**" = ["S608"]
 # Plugin / persistence / memory classes are concrete implementations of
 # entry-point ABCs (``ModelProvider``, ``ToolSource``, ``Middleware``,
 # ``HistoryStore``, ``MemoryStore``, …)
@@ -232,7 +227,7 @@ convention = "numpy"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-addopts = "-q --strict-markers"
+addopts = "-q --strict-markers -W error::ResourceWarning"
 testpaths = ["tests"]
 # Silence upstream warnings from deps we don't own. These are fired at
 # import time of langgraph / langchain_core's callback machinery and

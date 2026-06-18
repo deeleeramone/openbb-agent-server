@@ -3,7 +3,7 @@
 The agent has two storage layers:
 
 1. **Chat history** — every turn of every conversation, partitioned by `user_id`. Used to replay context and audit traces. Lives in `HistoryStore` (`persistence/sqlite_store.py`).
-2. **Cross-thread memory** — durable facts that persist across conversations, recalled semantically. Lives in `MemoryStore` (`memory/sqlite_store.py`), backed by `langchain_community.vectorstores.SQLiteVec` and an optional cross-encoder reranker.
+2. **Cross-thread memory** — durable facts that persist across conversations, recalled semantically. Lives in `MemoryStore` (`memory/sqlite_store.py`), backed by `sqlite-vec` and an optional cross-encoder reranker.
 
 This guide covers the second one.
 

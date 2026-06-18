@@ -5,7 +5,7 @@ Every swappable piece of the runtime is a plugin discovered via Python entry poi
 | Group | ABC | Built-ins |
 | --- | --- | --- |
 | `openbb_agent_server.auth` | `AuthBackend` | `none`, `bearer_static`, `api_key_table`, `oidc_jwt`, `openbb_workspace` |
-| `openbb_agent_server.models` | `ModelProvider` | `anthropic`, `openai`, `openai_compat`, `bedrock`, `vertex`, `google_genai`, `groq`, `nvidia`, `snowflake`, `fake` |
+| `openbb_agent_server.models` | `ModelProvider` | `anthropic`, `openai`, `openai_compat`, `bedrock`, `vertex`, `google_genai`, `groq`, `nvidia`, `fake` |
 | `openbb_agent_server.tools` | `ToolSource` | every shipped tool source |
 | `openbb_agent_server.middleware` | `Middleware` | `call_limit`, `tool_call_limit`, `tool_call_announcer`, `tool_call_ledger`, `tool_filter`, `tool_message_normaliser`, `loop_guard`, `usage_recorder` |
 | `openbb_agent_server.subagents` | `SubAgentSpec` (Protocol) | `researcher`, `analyst`, `charter`, `pdf_reader` |
@@ -129,7 +129,7 @@ ctx = run_context.current()
 ```python
 from openbb_agent_server.runtime import emit
 
-emit.reasoning_step("Querying Snowflake", database="prod")
+emit.reasoning_step("Fetching data", source="widget")
 emit.table_artifact(columns=["sym", "px"], rows=[["AAPL", 178.4]], name="quotes")
 emit.cite(text="…", source="Reuters", source_url="https://reuters.com/...")
 ```

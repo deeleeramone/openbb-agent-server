@@ -380,8 +380,7 @@ ArtifactType = Literal[
     "text",
     "table",
     "chart",
-    "snowflake_query",
-    "snowflake_python",
+    "code",
     "html",
 ]
 
@@ -392,8 +391,8 @@ class ClientArtifact(BaseModel):
     Attributes
     ----------
     type : ArtifactType
-        Artifact kind — ``"text"``, ``"table"``, ``"chart"``,
-        ``"snowflake_query"``, ``"snowflake_python"`` or ``"html"``.
+        Artifact kind — ``"text"``, ``"table"``, ``"chart"``, ``"code"``
+        or ``"html"``.
     name : str
         Short display name.
     description : str
@@ -405,8 +404,6 @@ class ClientArtifact(BaseModel):
         and charts.
     chart_params : dict[str, Any] or None
         Chart rendering options, when ``type`` is ``"chart"``.
-    query_data_source : dict[str, Any] or None
-        Data-source descriptor for Snowflake artifacts.
     """
 
     type: ArtifactType
@@ -415,7 +412,6 @@ class ClientArtifact(BaseModel):
     uuid: str
     content: str | list[dict[str, Any]]
     chart_params: dict[str, Any] | None = None
-    query_data_source: dict[str, Any] | None = None
 
 
 class MessageArtifactSSE(BaseSSE):

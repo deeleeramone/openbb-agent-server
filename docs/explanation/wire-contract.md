@@ -190,18 +190,16 @@ The server is asking Workspace to execute a tool **in the browser**. Workspace r
 | `uuid` | `str` | yes | Stable id for the card (server-internal — do not echo it in prose). |
 | `content` | `str \| list[dict]` | yes | Body — shape depends on `type`. |
 | `chart_params` | `dict \| None` | no | Plotly figure JSON (chart artifacts only). |
-| `query_data_source` | `dict \| None` | no | Source descriptor (Snowflake artifacts only). |
 
 #### Artifact types
 
-| `type` | `content` | `chart_params` | `query_data_source` | Emitted by |
-| --- | --- | --- | --- | --- |
-| `text` | Markdown string | — | — | `emit_markdown_artifact` (also the fallback for `markdown` and any unknown type) |
-| `table` | `list[dict]` — one object per row, column name → cell value | — | — | `emit_table_artifact` |
-| `chart` | `""` | Plotly figure JSON | — | `emit_chart_artifact` |
-| `html` | Sanitised HTML string | — | — | `emit_html_artifact` |
-| `snowflake_query` | SQL string | — | Snowflake source descriptor | — (Workspace-native) |
-| `snowflake_python` | Python string | — | Snowflake source descriptor | — (Workspace-native) |
+| `type` | `content` | `chart_params` | Emitted by |
+| --- | --- | --- | --- |
+| `text` | Markdown string | — | `emit_markdown_artifact` (also the fallback for `markdown` and any unknown type) |
+| `table` | `list[dict]` — one object per row, column name → cell value | — | `emit_table_artifact` |
+| `chart` | `""` | Plotly figure JSON | `emit_chart_artifact` |
+| `code` | Source code string | — | `emit_code_artifact` |
+| `html` | Sanitised HTML string | — | `emit_html_artifact` |
 
 `image` and `file` are **not** in the contract — markdown surfaces as `text`, other binary content is not emitted as an artifact.
 

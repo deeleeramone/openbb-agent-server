@@ -11,7 +11,7 @@ PDFs, images, audio, and video clips arrive in `QueryRequest.uploaded_files` as 
 | PDFs | `.pdf` / `application/pdf` | `pdf_extract`, `pdf_reader` sub-agent |
 | Images | `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.bmp`, `.tiff`, `.svg` / `image/*` | `vision_qa`, `paligemma_vision`, `gemini_image` |
 | Audio | `.mp3`, `.m4a`, `.aac`, `.wav`, `.flac`, `.ogg`, `.opus`, `.webm`, `.mp4`, `.mov`, `.mkv` / `audio/*` / `video/*` | `gemma_audio`, `groq_audio` |
-| Text / spreadsheet | `.csv`, `.tsv`, `.json`, `.yaml`, `.md`, `.txt`, `.html` | `ingest_request_context` decodes via `langchain_community.document_loaders` |
+| Text / spreadsheet | `.csv`, `.tsv`, `.json`, `.yaml`, `.md`, `.txt`, `.html` | `ingest_request_context` decodes via stdlib parsers |
 
 ## PDFs
 

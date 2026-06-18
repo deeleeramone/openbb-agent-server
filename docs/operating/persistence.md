@@ -5,7 +5,7 @@ One SQLite (or Postgres) file holds two parallel layers:
 | Layer | Storage |
 | --- | --- |
 | Chat history, traces, usage, artifacts, citations, widget data, PDF ingest, users, api keys | SQLAlchemy ORM (see schema below) |
-| Cross-thread vector memory + per-page PDF ANN index | `langchain_community.vectorstores.SQLiteVec` tables in the same file |
+| Cross-thread vector memory + per-page PDF ANN index | `sqlite-vec` ANN tables in the same file |
 
 ## URLs
 

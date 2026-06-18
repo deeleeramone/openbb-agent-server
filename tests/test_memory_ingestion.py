@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -256,6 +257,22 @@ def test_decode_file_text_html_uses_bs_loader() -> None:
     out = _decode_file_text("page.html", "text/html", b64)
     assert out is not None
     assert "hello world" in out
+
+
+def test_decode_file_text_htm_extension_uses_html_parser() -> None:
+    raw = b"<div>content</div>"
+    b64 = base64.b64encode(raw).decode()
+    out = _decode_file_text("page.htm", "text/html", b64)
+    assert out is not None
+    assert "content" in out
+
+
+def test_load_via_loader_returns_none_on_internal_exception(tmp_path: Path) -> None:
+    """Exercise the except branch inside _load_via_loader itself."""
+    from openbb_agent_server.memory.ingestion import _load_via_loader
+
+    bad_path = str(tmp_path / "no-such-file.csv")
+    assert _load_via_loader(bad_path, ".csv") is None
 
 
 def test_decode_file_text_loader_failure_falls_back_to_plain_decode(

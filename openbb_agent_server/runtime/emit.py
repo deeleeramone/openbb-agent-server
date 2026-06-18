@@ -187,6 +187,49 @@ def markdown_artifact(
     return artifact_uuid
 
 
+def code_artifact(
+    *,
+    content: str,
+    language: str = "",
+    name: str = "",
+    description: str = "",
+    uuid: str | None = None,
+) -> str:
+    """Emit a code artifact and return its uuid.
+
+    Parameters
+    ----------
+    content : str
+        Source code rendered as the artifact body.
+    language : str, default ""
+        Programming language hint for syntax highlighting.
+    name : str, default ""
+        Display name shown for the artifact in the Workspace UI.
+    description : str, default ""
+        Longer description of the artifact's purpose or contents.
+    uuid : str or None, default None
+        Explicit artifact identifier; a new url-safe token is generated when
+        omitted.
+
+    Returns
+    -------
+    str
+        The artifact uuid, usable to reference this artifact later.
+    """
+    artifact_uuid = uuid or _new_uuid()
+    _emit_artifact(
+        {
+            "type": "code",
+            "uuid": artifact_uuid,
+            "name": name,
+            "description": description,
+            "content": content,
+            "language": language,
+        }
+    )
+    return artifact_uuid
+
+
 def table_artifact(
     *,
     columns: list[str],

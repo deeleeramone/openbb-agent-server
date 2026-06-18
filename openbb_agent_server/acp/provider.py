@@ -128,10 +128,8 @@ def _artifact_to_pywry(artifact: ClientArtifact) -> Any:
         return JsonArtifact(data={"name": artifact.name, "content": content})
     if artifact.type == "html":
         return HtmlArtifact(content=str(content))
-    if artifact.type == "snowflake_query":
-        return CodeArtifact(content=str(content), language="sql")
-    if artifact.type == "snowflake_python":
-        return CodeArtifact(content=str(content), language="python")
+    if artifact.type == "code":
+        return CodeArtifact(content=str(content))
     # "text" and anything future-unknown render as markdown.
     return MarkdownArtifact(content=str(content))
 

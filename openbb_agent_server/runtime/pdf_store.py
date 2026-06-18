@@ -12,7 +12,6 @@ import threading
 from typing import Any
 
 import sqlite_vec
-from langchain_community.vectorstores import SQLiteVec
 from langchain_core.embeddings import Embeddings
 from sqlalchemy import event, select
 from sqlalchemy.ext.asyncio import (
@@ -21,6 +20,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from openbb_agent_server._vendor.sqlitevec import SQLiteVec
 from openbb_agent_server.observability.logging import trace
 from openbb_agent_server.persistence import models as m
 from openbb_agent_server.runtime.principal import UserPrincipal
@@ -138,6 +138,12 @@ class PdfStore:
                 db_file=db_file,
             )
             self._vec.create_table_if_not_exists()
+
+    async def aclose(self) -> None:
+        """Dispose of the async engine and close the vector connection."""
+        if self._vec_conn is not None:
+            self._vec_conn.close()
+        await self._engine.dispose()
 
     @property
     def engine(self) -> AsyncEngine:

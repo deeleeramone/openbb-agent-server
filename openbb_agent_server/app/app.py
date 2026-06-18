@@ -235,6 +235,12 @@ def create_app(settings: AgentServerSettings | None = None) -> FastAPI:
             try:
                 await checkpointer_provider.close(checkpointer)
             finally:
+                if memory is not None:
+                    memory.close()
+                if stores.pdf_store is not None:
+                    await stores.pdf_store.aclose()
+                if widget_store is not None:
+                    await widget_store._engine.dispose()
                 await history.aclose()
                 services.reset()
 

@@ -6,7 +6,7 @@ The agent server is a Python package that ships its own CLI. Out of the box it s
 
 - Python 3.10+
 - An NVIDIA API key if you want production-quality embeddings, reranking, and multimodal tools (vision / audio). Without one, the server falls back to deterministic hash embeddings and the NIM-backed tools quietly skip registration.
-- A model-provider key for whichever chat model you choose (Anthropic / OpenAI / Bedrock / Vertex / Groq / Snowflake Cortex). The default profile uses NVIDIA `nemotron-3-super-120b-a12b`.
+- A model-provider key for whichever chat model you choose (Anthropic / OpenAI / Bedrock / Vertex / Groq). The default profile uses NVIDIA `nemotron-3-super-120b-a12b`.
 
 ## Install
 
@@ -25,11 +25,10 @@ pip install -e ".[openai]"        # langchain-openai
 pip install -e ".[bedrock]"       # langchain-aws
 pip install -e ".[vertex]"        # langchain-google-genai
 pip install -e ".[groq]"          # langchain-groq
-pip install -e ".[snowflake]"     # snowflake-connector-python + sqlglot
 pip install -e ".[postgres]"      # psycopg + langgraph-checkpoint-postgres
 ```
 
-`langchain-community`, `langchain-text-splitters`, and `sqlite-vec` are base dependencies — the memory pipeline needs them in every install.
+`langchain-text-splitters` and `sqlite-vec` are base dependencies — the memory pipeline needs them in every install.
 
 ## Configure
 

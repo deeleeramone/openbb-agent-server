@@ -56,14 +56,14 @@ async def test_announces_tool_name_only_no_args(
         return "ok"
 
     await mw.awrap_tool_call(
-        _Request(tool_name="snowflake_query", args={"sql": "SELECT 1"}),
+        _Request(tool_name="web_search", args={"sql": "SELECT 1"}),
         handler,
     )
     [step] = captured
     assert step["type"] == "step"
     assert step["event_type"] == "INFO"
-    assert step["message"] == "Calling tool: snowflake_query"
-    assert step["details"] == {"tool_name": "snowflake_query"}
+    assert step["message"] == "Calling tool: web_search"
+    assert step["details"] == {"tool_name": "web_search"}
     assert "sql" not in str(step)
     assert "SELECT 1" not in str(step)
 

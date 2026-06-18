@@ -159,6 +159,16 @@ def test_markdown_artifact_payload_shape(captured_writes: list[dict[str, Any]]) 
     assert inner["content"] == "# Hi"
 
 
+def test_code_artifact_payload_shape(captured_writes: list[dict[str, Any]]) -> None:
+    uid = emit.code_artifact(content="print(1)", language="python", name="snippet")
+    inner = captured_writes[0]["artifact"]
+    assert inner["type"] == "code"
+    assert inner["content"] == "print(1)"
+    assert inner["language"] == "python"
+    assert inner["uuid"] == uid
+    assert inner["name"] == "snippet"
+
+
 def test_bind_writer_overrides_resolution() -> None:
     """Make _writer() return the bound sink."""
     captured: list[dict[str, Any]] = []

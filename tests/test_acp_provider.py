@@ -93,10 +93,9 @@ def test_translate_hidden_status_dropped() -> None:
     [
         ("text", "# Title", MarkdownArtifact),
         ("html", "<b>x</b>", HtmlArtifact),
+        ("code", "print('hello')", CodeArtifact),
         ("table", [{"a": 1}], TableArtifact),
         ("chart", [{"x": 1, "y": 2}], TableArtifact),
-        ("snowflake_query", "SELECT 1", CodeArtifact),
-        ("snowflake_python", "print(1)", CodeArtifact),
     ],
 )
 def test_translate_artifacts_map_to_pywry_classes(
@@ -115,21 +114,6 @@ def test_translate_artifacts_map_to_pywry_classes(
     assert len(out) == 1
     assert isinstance(out[0], ArtifactUpdate)
     assert isinstance(out[0].artifact, expected_cls)
-
-
-def test_translate_sql_artifact_language() -> None:
-    ev = MessageArtifactSSE(
-        data=ClientArtifact(
-            type="snowflake_query",
-            name="q",
-            description="d",
-            uuid="u-2",
-            content="SELECT 1",
-        )
-    )
-    (update,) = translate_sse(ev)
-    assert update.artifact.language == "sql"
-    assert update.artifact.content == "SELECT 1"
 
 
 def test_translate_citations() -> None:

@@ -157,13 +157,11 @@ _WORKSPACE_NATIVE_FUNCTIONS: frozenset[str] = frozenset(
 
 
 _WORKSPACE_ARTIFACT_TYPES: frozenset[str] = frozenset(
-    {"text", "table", "chart", "snowflake_query", "snowflake_python", "html"}
+    {"text", "table", "chart", "code", "html"}
 )
 
 
-_ArtifactWireType = Literal[
-    "text", "table", "chart", "snowflake_query", "snowflake_python", "html"
-]
+_ArtifactWireType = Literal["text", "table", "chart", "code", "html"]
 
 
 def _resolve_artifact_wire_type(raw_type: str) -> _ArtifactWireType:
@@ -209,6 +207,8 @@ def _build_artifact(payload: dict[str, Any]) -> ClientArtifact:
             content = ""
         else:
             content = str(raw_content) if raw_content is not None else ""
+    elif wire_type == "code":
+        content = str(raw_content) if raw_content is not None else ""
     elif isinstance(raw_content, (str, list)):
         content = raw_content
     elif raw_content is None:

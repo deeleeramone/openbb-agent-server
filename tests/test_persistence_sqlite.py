@@ -335,11 +335,15 @@ async def test_get_trace_bundle_returns_none_for_missing_and_foreign_trace(
     assert await history.get_trace_bundle(principal=bob, trace_id="t-secret") is None
 
 
-def test_db_path_returns_file_for_sqlite(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_db_path_returns_file_for_sqlite(tmp_path: Path) -> None:
     store = SqliteHistoryStore(f"sqlite+aiosqlite:///{tmp_path / 'h.db'}")
     assert store.db_path == str(tmp_path / "h.db")
+    await store.aclose()
 
 
-def test_db_path_is_none_for_non_sqlite() -> None:
+@pytest.mark.asyncio
+async def test_db_path_is_none_for_non_sqlite() -> None:
     store = SqliteHistoryStore("postgresql+psycopg://u:p@localhost/db")
     assert store.db_path is None
+    await store.aclose()
