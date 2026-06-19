@@ -187,12 +187,13 @@ jobs:
             Linux)   sudo apt-get update && sudo apt-get install -y ffmpeg ;;
             macOS)   brew install --force ffmpeg ;;
             Windows)
-              choco install ffmpeg --no-progress --yes
-              # choco updates system PATH but the current bash session
-              # doesn't see it — add the shim directory explicitly.
+              choco install ffmpeg-full --no-progress --yes
               echo "C:\\ProgramData\\chocolatey\\bin" >> "$GITHUB_PATH"
               ;;
           esac
+
+      - name: Verify ffmpeg
+        run: ffmpeg -version && ffprobe -version
 
       - name: Run unit tests
         # The 100% coverage gate runs on every OS — Linux, macOS and
