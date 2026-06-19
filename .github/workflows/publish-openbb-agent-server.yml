@@ -205,11 +205,16 @@ jobs:
 
   publish:
     name: Publish to PyPI
-    needs: test
+    needs: [version-check, test]
     runs-on: ubuntu-latest
     permissions:
+      contents: write   # push the tag + create the GitHub release
       id-token: write   # required for PyPI OIDC trusted publishing
     steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+
       - uses: actions/download-artifact@v5
         with:
           name: openbb-agent-server-dist
@@ -218,3 +223,19 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist
+
+      - name: Create release tag
+        env:
+          VERSION: ${{ needs.version-check.outputs.version }}
+        run: |
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version-check.outputs.version }}
+        run: |
+          gh release create "v${VERSION}" dist/* \
+            --title "v${VERSION}" \
+            --generate-notes
