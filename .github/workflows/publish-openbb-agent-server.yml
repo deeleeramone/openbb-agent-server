@@ -186,7 +186,12 @@ jobs:
           case "$RUNNER_OS" in
             Linux)   sudo apt-get update && sudo apt-get install -y ffmpeg ;;
             macOS)   brew install --force ffmpeg ;;
-            Windows) choco install ffmpeg --no-progress --yes ;;
+            Windows)
+              choco install ffmpeg --no-progress --yes
+              # choco updates system PATH but the current bash session
+              # doesn't see it — add the shim directory explicitly.
+              echo "C:\\ProgramData\\chocolatey\\bin" >> "$GITHUB_PATH"
+              ;;
           esac
 
       - name: Run unit tests
