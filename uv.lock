@@ -2539,7 +2539,6 @@ all = [
     { name = "langchain-groq" },
     { name = "langchain-openai" },
     { name = "langgraph-checkpoint-postgres" },
-    { name = "openbb-workspace-mcp", marker = "python_full_version >= '3.13'" },
     { name = "pgvector" },
     { name = "psycopg", extra = ["binary"] },
     { name = "tavily-python" },
@@ -2574,9 +2573,6 @@ tavily = [
 vertex = [
     { name = "google-genai" },
     { name = "langchain-google-genai" },
-]
-workspace-mcp = [
-    { name = "openbb-workspace-mcp", marker = "python_full_version >= '3.13'" },
 ]
 
 [package.dev-dependencies]
@@ -2618,8 +2614,7 @@ requires-dist = [
     { name = "langgraph", specifier = ">=1.0.0" },
     { name = "langgraph-checkpoint-postgres", marker = "extra == 'postgres'", specifier = ">=2.0" },
     { name = "langgraph-checkpoint-sqlite", specifier = ">=2.0" },
-    { name = "openbb-agent-server", extras = ["anthropic", "openai", "bedrock", "vertex", "google-genai", "groq", "postgres", "tavily", "workspace-mcp"], marker = "extra == 'all'" },
-    { name = "openbb-workspace-mcp", marker = "python_full_version >= '3.13' and extra == 'workspace-mcp'", url = "https://github.com/OpenBB-finance/workspace-mcp/archive/refs/heads/main.zip" },
+    { name = "openbb-agent-server", extras = ["anthropic", "openai", "bedrock", "vertex", "google-genai", "groq", "postgres", "tavily"], marker = "extra == 'all'" },
     { name = "pdfplumber", specifier = ">=0.11" },
     { name = "pgvector", marker = "extra == 'postgres'", specifier = ">=0.3" },
     { name = "psycopg", extras = ["binary"], marker = "extra == 'postgres'", specifier = ">=3.2" },
@@ -2635,7 +2630,7 @@ requires-dist = [
     { name = "uuid7", specifier = ">=0.1" },
     { name = "uvicorn", specifier = ">=0.32.0" },
 ]
-provides-extras = ["anthropic", "openai", "bedrock", "vertex", "google-genai", "groq", "postgres", "tavily", "pywry", "workspace-mcp", "all"]
+provides-extras = ["anthropic", "openai", "bedrock", "vertex", "google-genai", "groq", "postgres", "tavily", "pywry", "all"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2648,41 +2643,6 @@ dev = [
     { name = "reportlab", specifier = ">=4.0" },
     { name = "ruff", specifier = ">=0.15,<0.16" },
     { name = "ty", specifier = ">=0.0.1a14" },
-]
-
-[[package]]
-name = "openbb-ai"
-version = "2.0.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pydantic", marker = "python_full_version >= '3.13'" },
-    { name = "xxhash", marker = "python_full_version >= '3.13'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/25/20/23af8a4b6128836ed864f3a13586f66306238ebd880461aa628a926487d7/openbb_ai-2.0.1.tar.gz", hash = "sha256:0ae6b529abdf3d6a4300c9e67c17dc04a6b735e96aee6b62128275ae441c5411", size = 20437, upload-time = "2026-05-18T18:57:53.844Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3c/66/0bf583e35b82594e05e8c261aedc40970b17248c31473e690985a93dffdc/openbb_ai-2.0.1-py3-none-any.whl", hash = "sha256:6426638f4457d9205818bcf828ef876e482b2877c8f26fa11cb7547c997f2d5a", size = 18221, upload-time = "2026-05-18T18:57:52.6Z" },
-]
-
-[[package]]
-name = "openbb-workspace-mcp"
-version = "0.1.0"
-source = { url = "https://github.com/OpenBB-finance/workspace-mcp/archive/refs/heads/main.zip" }
-dependencies = [
-    { name = "fastmcp", marker = "python_full_version >= '3.13'" },
-    { name = "openbb-ai", marker = "python_full_version >= '3.13'" },
-    { name = "pydantic", marker = "python_full_version >= '3.13'" },
-    { name = "starlette", version = "1.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13'" },
-    { name = "uvicorn", marker = "python_full_version >= '3.13'" },
-]
-sdist = { hash = "sha256:dd4951fa0437f4f488192a52e7a19d18bc3355dc10291a471e0a8907c6c1ad67" }
-
-[package.metadata]
-requires-dist = [
-    { name = "fastmcp", specifier = ">=3.2.0" },
-    { name = "openbb-ai", specifier = ">=1.9.0" },
-    { name = "pydantic", specifier = ">=2.12.5" },
-    { name = "starlette", specifier = ">=1.0.0" },
-    { name = "uvicorn", specifier = ">=0.42.0" },
 ]
 
 [[package]]
