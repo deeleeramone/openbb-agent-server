@@ -719,16 +719,10 @@ async def test_tool_invocation_through_langchain_layer() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_build_canvas_html_contains_container_and_escapes() -> None:
-    html = build_canvas_html(heading="<Agent>", subtitle="a & b")
+def test_build_canvas_html_contains_container() -> None:
+    html = build_canvas_html()
     assert f'id="{CANVAS_ELEMENT_ID}"' in html
-    assert "&lt;Agent&gt;" in html
-    assert "a &amp; b" in html
-
-
-def test_build_canvas_html_without_subtitle() -> None:
-    html = build_canvas_html(heading="X")
-    assert "obb-canvas-subtitle" not in html
+    assert "obb-canvas-root" in html
 
 
 def test_render_table_html_escapes_and_orders_columns() -> None:
@@ -1151,7 +1145,7 @@ def test_plain_pywry_widget_degrades_with_clear_warning(
 def test_bootstrap_script_ships_in_canvas_page() -> None:
     from openbb_agent_server.acp.canvas import CANVAS_BOOTSTRAP_JS
 
-    html = build_canvas_html(heading="X")
+    html = build_canvas_html()
     assert "<script>" in html
     assert "window.__obbCanvas" in html
     # The page handler covers every obb-canvas event the Python side

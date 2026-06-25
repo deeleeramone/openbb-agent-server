@@ -97,9 +97,11 @@ def test_launch_wires_window_chat_and_canvas(
     assert canvas_registry.get_canvas() is result.canvas
     # The canvas tool source was appended to the settings.
     assert "pywry_canvas" in result.provider.runtime.settings.tool_sources
-    # Window title fell through from the explicit argument; the welcome
-    # message defaulted from the agent metadata description.
-    assert "welcome_message" in result.chat.kwargs
+    # Settings items include model params and feature toggles.
+    assert "settings" in result.chat.kwargs
+    setting_ids = [s.id for s in result.chat.kwargs["settings"]]
+    assert "temperature" in setting_ids
+    assert "on_settings_change" in result.chat.kwargs
 
 
 def test_launch_block_true_runs_loop_and_tears_down(

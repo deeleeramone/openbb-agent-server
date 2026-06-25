@@ -84,6 +84,18 @@ class CanvasApp:
     datafeed: Any = None
 
 
+def _format_welcome(name: str | None, description: str | None) -> str:
+    """Format a markdown welcome message from agent metadata."""
+    parts: list[str] = []
+    if name:
+        parts.append(f"### {name}")
+    if description:
+        parts.append(f"_{description}_")
+    parts.append("---")
+    parts.append("Type a message to get started.")
+    return "\n\n".join(parts)
+
+
 def with_canvas_tools(settings: AgentServerSettings) -> AgentServerSettings:
     """Return settings with ``pywry_canvas`` appended to the tool sources.
 
@@ -339,10 +351,13 @@ def launch(
         only after the window has closed and been torn down.
     """
     from pywry import PyWry
-    from pywry.chat.manager import ChatManager
     from pywry.models import HtmlContent
 
-    from openbb_agent_server.acp.provider import OpenBBAgentProvider
+    from openbb_agent_server.acp.provider import (
+        OpenBBAgentProvider,
+        _build_settings_items,
+        _make_settings_change_handler,
+    )
 
     if settings is None:
         from openbb_agent_server.app.config import (
@@ -356,17 +371,28 @@ def launch(
 
     provider = OpenBBAgentProvider(settings, profile=profile, user_id=user_id)
     metadata = settings.metadata
-    if metadata.description:
-        chat_kwargs.setdefault("welcome_message", metadata.description)
+    welcome = _format_welcome(metadata.name, metadata.description)
+    if welcome:
+        chat_kwargs.setdefault("welcome_message", welcome)
+
+    active_profile = profile or settings.default_profile
+    settings_items = _build_settings_items(settings, active_profile)
+    chat_ref: list[Any] = []
+    chat_kwargs.setdefault("settings", settings_items)
+    chat_kwargs.setdefault(
+        "on_settings_change",
+        _make_settings_change_handler(provider, settings, chat_ref),
+    )
+
+    from pywry.chat.manager import ChatManager
+
     chat = ChatManager(provider=provider, **chat_kwargs)
+    chat_ref.append(chat)
 
     window_title = title or metadata.name or "OpenBB Agent"
     app = PyWry(title=window_title)
     content = HtmlContent(
-        html=build_canvas_html(
-            heading=metadata.name or "OpenBB Agent",
-            subtitle=metadata.description or "",
-        ),
+        html=build_canvas_html(),
         inline_css=CANVAS_CSS,
     )
     widget = app.show(

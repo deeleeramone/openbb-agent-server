@@ -184,44 +184,21 @@ CANVAS_BOOTSTRAP_JS = """
 """
 
 
-def build_canvas_html(
-    *,
-    heading: str = "OpenBB Agent",
-    subtitle: str = "",
-) -> str:
+def build_canvas_html() -> str:
     """Build the main content page the chat toolbar attaches to.
 
-    A header strip, the ``#openbb-canvas`` container the agent draws
-    into via the ``pywry_canvas`` tools, and the canvas bootstrap
-    script (which executes on the native + inline paths; the anywidget
-    path receives the same script through the ``_asset_js`` trait).
-
-    Parameters
-    ----------
-    heading : str
-        Bold title shown in the header strip; HTML-escaped before use.
-    subtitle : str
-        Optional dimmed text rendered beside the heading; HTML-escaped
-        and omitted entirely when empty.
+    The ``#openbb-canvas`` container the agent draws into via the
+    ``pywry_canvas`` tools, seeded with the empty-state placeholder,
+    and the canvas bootstrap script.
 
     Returns
     -------
     str
-        A full HTML fragment: the canvas root with header, the
-        ``#openbb-canvas`` main container seeded with the empty state,
-        and the bootstrap ``<script>`` tag.
+        A full HTML fragment: the canvas root, the ``#openbb-canvas``
+        main container, and the bootstrap ``<script>`` tag.
     """
-    sub = (
-        f'<span class="obb-canvas-subtitle">{html_mod.escape(subtitle)}</span>'
-        if subtitle
-        else ""
-    )
     return f"""
 <div class="obb-canvas-root">
-  <header class="obb-canvas-header">
-    <strong>{html_mod.escape(heading)}</strong>
-    {sub}
-  </header>
   <main id="{CANVAS_ELEMENT_ID}" class="obb-canvas-main">
     {_EMPTY_STATE}
   </main>
@@ -232,12 +209,6 @@ def build_canvas_html(
 
 CANVAS_CSS = """
 .obb-canvas-root { display: flex; flex-direction: column; height: 100vh; }
-.obb-canvas-header {
-  display: flex; align-items: baseline; gap: 12px;
-  padding: 10px 16px; border-bottom: 1px solid rgba(128,128,128,0.25);
-  flex: 0 0 auto;
-}
-.obb-canvas-subtitle { opacity: 0.65; font-size: 0.85em; }
 .obb-canvas-main { flex: 1 1 auto; overflow: auto; padding: 16px; }
 .obb-canvas-empty { opacity: 0.55; text-align: center; margin-top: 18vh; }
 .obb-canvas-title { margin: 0 0 12px 0; }

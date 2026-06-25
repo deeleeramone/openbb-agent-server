@@ -49,6 +49,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import queue
+import threading
 import uuid
 from collections.abc import AsyncIterator, Iterator
 from dataclasses import dataclass, field
@@ -67,13 +69,16 @@ try:
     from pywry.chat.session import (
         AgentCapabilities,
         ClientCapabilities,
+        ConfigOptionChoice,
         PromptCapabilities,
+        SessionConfigOption,
         SessionMode,
     )
     from pywry.chat.updates import (
         AgentMessageUpdate,
         ArtifactUpdate,
         CitationUpdate,
+        ConfigOptionUpdate,
         ModeUpdate,
         SessionUpdate,
         StatusUpdate,
@@ -103,6 +108,19 @@ from openbb_agent_server.runtime.embedded import (
 )
 
 logger = logging.getLogger("openbb_agent_server.acp")
+
+
+def _format_welcome(name: str | None, description: str | None) -> str:
+    """Format a markdown welcome message from agent metadata."""
+    parts: list[str] = []
+    if name:
+        parts.append(f"### {name}")
+    if description:
+        parts.append(f"_{description}_")
+    parts.append("---")
+    parts.append("Type a message to get started.")
+    return "\n\n".join(parts)
+
 
 # INFO statuses come from the reasoning channel (the adapter folds
 # ``<thinking>`` segments and tool announcements into them) — they land
@@ -229,6 +247,9 @@ class _AcpSession:
     messages: list[ChatMessage] = field(default_factory=list)
     cancel_event: asyncio.Event | None = None
     modes_announced: bool = False
+    config_announced: bool = False
+    workspace_options: dict[str, Any] = field(default_factory=dict)
+    model_config_overrides: dict[str, Any] = field(default_factory=dict)
 
 
 class OpenBBAgentProvider(ChatProvider):
@@ -294,6 +315,17 @@ class OpenBBAgentProvider(ChatProvider):
             scopes=DEFAULT_EMBEDDED_SCOPES,
         )
         self._sessions: dict[str, _AcpSession] = {}
+        # Persistent event loop: the sqlite checkpointer (and
+        # EmbeddedRuntime._start_lock) bind asyncio.Locks to the loop
+        # they are first used on.  ChatManager calls asyncio.run() per
+        # prompt — a new loop each time — which crashes the lock on the
+        # second call. Keeping a single loop in a daemon thread avoids
+        # that; every async method delegates to it.
+        self._loop = asyncio.new_event_loop()
+        self._loop_thread = threading.Thread(
+            target=self._loop.run_forever, daemon=True, name="acp-loop"
+        )
+        self._loop_thread.start()
 
     @classmethod
     def from_toml(
@@ -338,6 +370,58 @@ class OpenBBAgentProvider(ChatProvider):
         """The embedded runtime this provider drives."""
         return self._runtime
 
+    def _config_options_for(
+        self,
+        profile_name: str,
+        workspace_options: dict[str, Any],
+    ) -> list[SessionConfigOption]:
+        """Build ``SessionConfigOption`` list from profile features.
+
+        Features whose value is a dict with ``label`` / ``description``
+        (like ``search-web`` and ``fetch-url``) become toggle options.
+        The current value is read from ``workspace_options``.
+        """
+        prof = self._runtime.settings.resolve_profile(profile_name)
+        options: list[SessionConfigOption] = []
+        for key, spec in prof.features.items():
+            if not isinstance(spec, dict) or "label" not in spec:
+                continue
+            default = spec.get("default", False)
+            current = workspace_options.get(key, default)
+            options.append(
+                SessionConfigOption(
+                    id=key,
+                    name=spec["label"],
+                    description=spec.get("description"),
+                    category="feature",
+                    type="select",
+                    currentValue="on" if current else "off",
+                    options=[
+                        ConfigOptionChoice(value="on", name="On"),
+                        ConfigOptionChoice(value="off", name="Off"),
+                    ],
+                )
+            )
+        return options
+
+    def _on_persistent_loop(self) -> bool:
+        """True when the caller is already on the persistent event loop."""
+        try:
+            return asyncio.get_running_loop() is self._loop
+        except RuntimeError:
+            return False
+
+    async def _ensure_started(self) -> None:
+        """Start the runtime, delegating to the persistent loop if needed."""
+        if self._on_persistent_loop():
+            await self._runtime.start()
+        else:
+            await asyncio.wrap_future(
+                asyncio.run_coroutine_threadsafe(
+                    self._runtime.start(), self._loop
+                )
+            )
+
     async def initialize(
         self,
         capabilities: ClientCapabilities,
@@ -357,11 +441,12 @@ class OpenBBAgentProvider(ChatProvider):
             session loading, and mode support when more than one agent
             profile is configured.
         """
-        await self._runtime.start()
+        await self._ensure_started()
         has_modes = len(self._runtime.settings.all_profile_names()) > 1
         return AgentCapabilities(
             promptCapabilities=PromptCapabilities(image=True),
             loadSession=False,
+            configOptions=True,
             modes=has_modes,
         )
 
@@ -394,9 +479,15 @@ class OpenBBAgentProvider(ChatProvider):
                 len(mcp_servers),
             )
         session_id = str(uuid.uuid4())
+        prof = self._runtime.settings.resolve_profile(self._default_profile)
+        defaults: dict[str, Any] = {}
+        for key, spec in prof.features.items():
+            if isinstance(spec, dict) and "label" in spec:
+                defaults[key] = spec.get("default", False)
         self._sessions[session_id] = _AcpSession(
             conversation_id=session_id,
             profile=self._default_profile,
+            workspace_options=defaults,
         )
         return session_id
 
@@ -438,7 +529,19 @@ class OpenBBAgentProvider(ChatProvider):
         """
         session = self._sessions.get(session_id)
         if session is None:
-            raise ValueError(f"unknown session: {session_id!r}")
+            # ChatManager passes its thread_id directly without calling
+            # new_session() first — create the session lazily.
+            prof = self._runtime.settings.resolve_profile(self._default_profile)
+            defaults: dict[str, Any] = {}
+            for key, spec in prof.features.items():
+                if isinstance(spec, dict) and "label" in spec:
+                    defaults[key] = spec.get("default", False)
+            session = _AcpSession(
+                conversation_id=session_id,
+                profile=self._default_profile,
+                workspace_options=defaults,
+            )
+            self._sessions[session_id] = session
 
         session.cancel_event = cancel_event or asyncio.Event()
 
@@ -451,9 +554,35 @@ class OpenBBAgentProvider(ChatProvider):
                     availableModes=[SessionMode(id=name, name=name) for name in names],
                 )
 
+        if not session.config_announced:
+            session.config_announced = True
+            cfg_opts = self._config_options_for(
+                session.profile, session.workspace_options
+            )
+            if cfg_opts:
+                yield ConfigOptionUpdate(options=cfg_opts)
+
         text, files = _content_blocks_to_turn(content)
         session.messages.append(ChatMessage(role="human", content=text))
 
+        if self._on_persistent_loop():
+            # Direct path — caller is already on the persistent loop
+            # (tests, or code that shares our loop).
+            async for update in self._run_turn_direct(session, files):
+                yield update
+        else:
+            # Bridged path — caller is on a different event loop
+            # (ChatManager's per-prompt asyncio.run). Run the turn on
+            # the persistent loop and ferry updates through a queue.
+            async for update in self._run_turn_bridged(session, files):
+                yield update
+
+    async def _run_turn_direct(
+        self,
+        session: _AcpSession,
+        files: list[UploadedFile],
+    ) -> AsyncIterator[SessionUpdate]:
+        """Run a turn directly on the current (persistent) event loop."""
         assembled: list[str] = []
         try:
             async for ev in self._runtime.run_turn(
@@ -463,6 +592,8 @@ class OpenBBAgentProvider(ChatProvider):
                 profile=session.profile,
                 uploaded_files=files,
                 cancel_event=session.cancel_event,
+                workspace_options=session.workspace_options,
+                model_config_overrides=session.model_config_overrides or None,
             ):
                 if isinstance(ev, MessageChunkSSE):
                     assembled.append(ev.data.delta)
@@ -481,6 +612,75 @@ class OpenBBAgentProvider(ChatProvider):
         if final_text:
             session.messages.append(ChatMessage(role="ai", content=final_text))
 
+    async def _run_turn_bridged(
+        self,
+        session: _AcpSession,
+        files: list[UploadedFile],
+    ) -> AsyncIterator[SessionUpdate]:
+        """Run a turn on the persistent loop, bridging via a queue."""
+        _SENTINEL = object()
+        q: queue.SimpleQueue[Any] = queue.SimpleQueue()
+        loop_cancel_box: list[asyncio.Event] = []
+
+        async def _pump() -> None:
+            lc = asyncio.Event()
+            loop_cancel_box.append(lc)
+            assembled: list[str] = []
+            try:
+                async for ev in self._runtime.run_turn(
+                    principal=self._principal,
+                    conversation_id=session.conversation_id,
+                    messages=list(session.messages),
+                    profile=session.profile,
+                    uploaded_files=files,
+                    cancel_event=lc,
+                    workspace_options=session.workspace_options,
+                    model_config_overrides=session.model_config_overrides or None,
+                ):
+                    if isinstance(ev, MessageChunkSSE):
+                        assembled.append(ev.data.delta)
+                    for update in translate_sse(ev):
+                        q.put(update)
+            except asyncio.CancelledError:
+                q.put(("__cancelled__",))
+                return
+            except Exception as exc:
+                logger.exception("acp: agent turn failed")
+                q.put(StatusUpdate(text=f"ERROR: agent turn failed — {exc}"))
+            finally:
+                final_text = "".join(assembled)
+                if final_text:
+                    session.messages.append(
+                        ChatMessage(role="ai", content=final_text)
+                    )
+                session.cancel_event = None
+                q.put(_SENTINEL)
+
+        pump_future = asyncio.run_coroutine_threadsafe(_pump(), self._loop)
+
+        try:
+            while True:
+                try:
+                    item = q.get_nowait()
+                except queue.Empty:
+                    if session.cancel_event and session.cancel_event.is_set():
+                        if loop_cancel_box:
+                            self._loop.call_soon_threadsafe(
+                                loop_cancel_box[0].set
+                            )
+                    await asyncio.sleep(0.02)
+                    continue
+                if item is _SENTINEL:
+                    break
+                if isinstance(item, tuple) and item == ("__cancelled__",):
+                    raise asyncio.CancelledError
+                yield item
+        finally:
+            if not pump_future.done():
+                if loop_cancel_box:
+                    self._loop.call_soon_threadsafe(loop_cancel_box[0].set)
+                pump_future.result(timeout=10)
+
     async def cancel(self, session_id: str) -> None:
         """Cooperatively cancel the session's in-flight turn, if any.
 
@@ -495,6 +695,43 @@ class OpenBBAgentProvider(ChatProvider):
         session = self._sessions.get(session_id)
         if session is not None and session.cancel_event is not None:
             session.cancel_event.set()
+
+    async def set_config_option(
+        self,
+        session_id: str,
+        option_id: str,
+        value: str,
+    ) -> list[SessionConfigOption]:
+        """Change a session config option and return the full config state.
+
+        Toggle options (features like ``search-web``) accept ``"on"`` /
+        ``"off"`` values, mapped to ``True`` / ``False`` in the session's
+        ``workspace_options``.
+
+        Parameters
+        ----------
+        session_id : str
+            Id of the session whose config should change.
+        option_id : str
+            Config option identifier (matches a feature key).
+        value : str
+            New value — ``"on"`` or ``"off"`` for toggle options.
+
+        Returns
+        -------
+        list[SessionConfigOption]
+            The complete set of config options with updated values.
+
+        Raises
+        ------
+        ValueError
+            If ``session_id`` does not name a known session.
+        """
+        session = self._sessions.get(session_id)
+        if session is None:
+            raise ValueError(f"unknown session: {session_id!r}")
+        session.workspace_options[option_id] = value == "on"
+        return self._config_options_for(session.profile, session.workspace_options)
 
     async def set_mode(self, session_id: str, mode_id: str) -> None:
         """Switch the session's agent profile (ACP mode).
@@ -517,8 +754,158 @@ class OpenBBAgentProvider(ChatProvider):
         if session is None:
             raise ValueError(f"unknown session: {session_id!r}")
         # Raises KeyError on unknown profile — surfaced to the caller.
-        self._runtime.settings.resolve_profile(mode_id)
+        prof = self._runtime.settings.resolve_profile(mode_id)
         session.profile = mode_id
+        # Re-derive workspace_options defaults for the new profile.
+        defaults: dict[str, Any] = {}
+        for key, spec in prof.features.items():
+            if isinstance(spec, dict) and "label" in spec:
+                defaults[key] = spec.get("default", False)
+        session.workspace_options = defaults
+        session.model_config_overrides = {}
+        session.config_announced = False
+
+
+def _build_settings_items(
+    server_settings: AgentServerSettings,
+    active_profile: str,
+) -> list[Any]:
+    """Build ``SettingsItem`` list for the gear dropdown.
+
+    Includes:
+    * **Agent profile** selector (when more than one profile exists).
+    * **Model parameters** — temperature, top_p, max_completion_tokens.
+    * **Feature toggles** — search-web, fetch-url, etc.
+    """
+    from pywry.chat.manager import SettingsItem
+
+    items: list[SettingsItem] = []
+
+    # -- Profile selector --------------------------------------------------
+    profile_names = list(server_settings.all_profile_names())
+    if len(profile_names) > 1:
+        items.append(SettingsItem(id="separator-profile", type="separator"))
+        items.append(
+            SettingsItem(
+                id="agent-profile",
+                label="Agent",
+                type="select",
+                value=active_profile,
+                options=profile_names,
+            )
+        )
+
+    # -- Model config for the active profile --------------------------------
+    prof = server_settings.resolve_profile(active_profile)
+
+    items.append(SettingsItem(id="separator-model", type="separator"))
+    temperature = prof.model_config_.get("temperature", 0.4)
+    items.append(
+        SettingsItem(
+            id="temperature",
+            label="Temperature",
+            type="range",
+            value=temperature,
+            min=0.0,
+            max=2.0,
+            step=0.1,
+        )
+    )
+    top_p = prof.model_config_.get("top_p", 0.95)
+    items.append(
+        SettingsItem(
+            id="top_p",
+            label="Top P",
+            type="range",
+            value=top_p,
+            min=0.0,
+            max=1.0,
+            step=0.05,
+        )
+    )
+    max_tokens = prof.model_config_.get("max_completion_tokens", 8192)
+    items.append(
+        SettingsItem(
+            id="max_completion_tokens",
+            label="Max Tokens",
+            type="range",
+            value=max_tokens,
+            min=256,
+            max=32768,
+            step=256,
+        )
+    )
+
+    # -- Feature toggles ----------------------------------------------------
+    has_features = False
+    for key, spec in prof.features.items():
+        if not isinstance(spec, dict) or "label" not in spec:
+            continue
+        if not has_features:
+            items.append(SettingsItem(id="separator-features", type="separator"))
+            has_features = True
+        items.append(
+            SettingsItem(
+                id=key,
+                label=spec["label"],
+                type="toggle",
+                value=bool(spec.get("default", False)),
+            )
+        )
+
+    return items
+
+
+def _make_settings_change_handler(
+    provider: OpenBBAgentProvider,
+    server_settings: AgentServerSettings,
+    chat_ref: list[Any],
+) -> Any:
+    """Return an ``on_settings_change`` callback for the ChatManager.
+
+    Handles profile switching (rebuilds settings items), model config
+    changes, and feature toggles.
+    """
+
+    def _on_settings_change(key: str, value: Any) -> None:
+        if key == "agent-profile":
+            profile_name = str(value)
+            # Switch every session to the new profile.
+            for session in provider._sessions.values():
+                try:
+                    prof = server_settings.resolve_profile(profile_name)
+                except KeyError:
+                    continue
+                session.profile = profile_name
+                # Reset workspace_options to the new profile's defaults.
+                defaults: dict[str, Any] = {}
+                for fkey, spec in prof.features.items():
+                    if isinstance(spec, dict) and "label" in spec:
+                        defaults[fkey] = spec.get("default", False)
+                session.workspace_options = defaults
+                # Reset model config overrides.
+                session.model_config_overrides = {}
+                session.config_announced = False
+            # Rebuild settings items for the new profile.
+            chat = chat_ref[0] if chat_ref else None
+            if chat is not None:
+                new_items = _build_settings_items(
+                    server_settings, profile_name
+                )
+                for item in new_items:
+                    chat._emit("chat:register-settings-item", item.model_dump())
+        elif key in ("temperature", "top_p", "max_completion_tokens"):
+            coerced: int | float = (
+                int(value) if key == "max_completion_tokens" else float(value)
+            )
+            for session in provider._sessions.values():
+                session.model_config_overrides[key] = coerced
+        else:
+            # Feature toggle.
+            for session in provider._sessions.values():
+                session.workspace_options[key] = bool(value)
+
+    return _on_settings_change
 
 
 def create_chat_manager(
@@ -534,9 +921,10 @@ def create_chat_manager(
     Convenience wrapper: resolves the TOML cascade (or takes explicit
     ``settings``), wraps the provider, and returns a ``ChatManager``
     whose ``toolbar()`` / ``callbacks()`` / ``bind()`` attach to any
-    PyWry widget instance. When the resolved settings carry a metadata
-    description and no ``welcome_message`` was supplied, that
-    description becomes the chat's welcome message.
+    PyWry widget instance. The gear-dropdown exposes the agent profile
+    selector, model parameters (temperature, top_p, max tokens), and
+    feature toggles (search-web, fetch-url). Changing settings updates
+    the provider's per-session state for the next turn.
 
     Parameters
     ----------
@@ -574,7 +962,21 @@ def create_chat_manager(
             profile=profile,
             user_id=user_id,
         )
-    metadata = provider.runtime.settings.metadata
-    if metadata.description:
-        chat_kwargs.setdefault("welcome_message", metadata.description)
-    return ChatManager(provider=provider, **chat_kwargs)
+
+    server_settings = provider.runtime.settings
+    metadata = server_settings.metadata
+    welcome = _format_welcome(metadata.name, metadata.description)
+    if welcome:
+        chat_kwargs.setdefault("welcome_message", welcome)
+    active_profile = profile or server_settings.default_profile
+    settings_items = _build_settings_items(server_settings, active_profile)
+    chat_ref: list[Any] = []
+    chat_kwargs.setdefault("settings", settings_items)
+    chat_kwargs.setdefault(
+        "on_settings_change",
+        _make_settings_change_handler(provider, server_settings, chat_ref),
+    )
+
+    chat = ChatManager(provider=provider, **chat_kwargs)
+    chat_ref.append(chat)
+    return chat

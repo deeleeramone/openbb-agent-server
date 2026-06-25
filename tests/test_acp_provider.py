@@ -241,17 +241,23 @@ async def test_provider_cancel_short_circuits(
         await provider.runtime.aclose()
 
 
-async def test_provider_unknown_session_raises(
+async def test_provider_unknown_session_auto_creates(
     settings_env: AgentServerSettings,
 ) -> None:
+    """prompt() lazily creates sessions for unknown ids (ChatManager
+    passes thread_id directly without calling new_session first)."""
     provider = OpenBBAgentProvider(settings_env)
     try:
+        await provider.initialize(ClientCapabilities())
+        # prompt auto-creates session — should not raise.
+        updates = [
+            u async for u in provider.prompt("nope", [TextPart(text="x")])
+        ]
+        assert "nope" in provider._sessions
+        await provider.cancel("nope")  # now a known session
+        # set_mode still raises for truly unknown sessions.
         with pytest.raises(ValueError, match="unknown session"):
-            async for _ in provider.prompt("nope", [TextPart(text="x")]):
-                pass
-        await provider.cancel("nope")  # unknown session: silent no-op
-        with pytest.raises(ValueError, match="unknown session"):
-            await provider.set_mode("nope", "default")
+            await provider.set_mode("nonexistent", "default")
     finally:
         await provider.runtime.aclose()
 
@@ -437,8 +443,11 @@ def test_create_chat_manager_with_settings(
     manager = create_chat_manager(settings=settings_env, user_id="cm-user")
     assert isinstance(manager, _FakeManager)
     assert isinstance(captured["provider"], OpenBBAgentProvider)
-    # Welcome message defaulted from the agent metadata description.
-    assert "welcome_message" in captured["kwargs"]
+    # Settings items include model params and feature toggles.
+    assert "settings" in captured["kwargs"]
+    setting_ids = [s.id for s in captured["kwargs"]["settings"]]
+    assert "temperature" in setting_ids
+    assert "on_settings_change" in captured["kwargs"]
 
 
 def test_create_chat_manager_from_cascade(

@@ -205,6 +205,8 @@ class EmbeddedRuntime:
         timezone: str | None = None,
         uploaded_files: Sequence[UploadedFile] = (),
         cancel_event: asyncio.Event | None = None,
+        workspace_options: dict[str, Any] | None = None,
+        model_config_overrides: dict[str, Any] | None = None,
     ) -> AsyncIterator[SSEEvent]:
         """Run one conversation turn and yield wire-protocol SSE events.
 
@@ -239,6 +241,14 @@ class EmbeddedRuntime:
         cancel_event : asyncio.Event or None, optional
             When set during streaming, stops the run and marks the trace
             ``"cancelled"`` without persisting AI output.
+        workspace_options : dict[str, Any] or None, optional
+            Per-user feature toggles (e.g. ``{"search-web": True}``).
+            Passed through to :class:`RunContext` so tool sources can
+            query them via :meth:`RunContext.has_workspace_option`.
+        model_config_overrides : dict[str, Any] or None, optional
+            Per-session overrides for model configuration keys (e.g.
+            ``{"temperature": 0.7}``). Merged over the profile's
+            ``model_config_`` before the agent runs.
 
         Yields
         ------
@@ -260,6 +270,9 @@ class EmbeddedRuntime:
         prof: AgentProfile = settings.resolve_profile(
             profile or settings.default_profile
         )
+        if model_config_overrides:
+            merged = {**prof.model_config_, **model_config_overrides}
+            prof = prof.model_copy(update={"model_config_": merged})
         history = self._stores.history
 
         await history.upsert_user(principal)
@@ -288,6 +301,7 @@ class EmbeddedRuntime:
             uploaded_files=await _collect_uploaded_files_with_ingest(
                 body, principal=principal
             ),
+            workspace_options=dict(workspace_options) if workspace_options else {},
         )
 
         await history.begin_trace(
