@@ -405,7 +405,7 @@ class OpenBBAgentProvider(ChatProvider):
         return options
 
     def _on_persistent_loop(self) -> bool:
-        """True when the caller is already on the persistent event loop."""
+        """Check if the caller is already on the persistent event loop."""
         try:
             return asyncio.get_running_loop() is self._loop
         except RuntimeError:
@@ -417,9 +417,7 @@ class OpenBBAgentProvider(ChatProvider):
             await self._runtime.start()
         else:
             await asyncio.wrap_future(
-                asyncio.run_coroutine_threadsafe(
-                    self._runtime.start(), self._loop
-                )
+                asyncio.run_coroutine_threadsafe(self._runtime.start(), self._loop)
             )
 
     async def initialize(
@@ -650,9 +648,7 @@ class OpenBBAgentProvider(ChatProvider):
             finally:
                 final_text = "".join(assembled)
                 if final_text:
-                    session.messages.append(
-                        ChatMessage(role="ai", content=final_text)
-                    )
+                    session.messages.append(ChatMessage(role="ai", content=final_text))
                 session.cancel_event = None
                 q.put(_SENTINEL)
 
@@ -663,11 +659,12 @@ class OpenBBAgentProvider(ChatProvider):
                 try:
                     item = q.get_nowait()
                 except queue.Empty:
-                    if session.cancel_event and session.cancel_event.is_set():
-                        if loop_cancel_box:
-                            self._loop.call_soon_threadsafe(
-                                loop_cancel_box[0].set
-                            )
+                    if (
+                        session.cancel_event
+                        and session.cancel_event.is_set()
+                        and loop_cancel_box
+                    ):
+                        self._loop.call_soon_threadsafe(loop_cancel_box[0].set)
                     await asyncio.sleep(0.02)
                     continue
                 if item is _SENTINEL:
@@ -889,9 +886,7 @@ def _make_settings_change_handler(
             # Rebuild settings items for the new profile.
             chat = chat_ref[0] if chat_ref else None
             if chat is not None:
-                new_items = _build_settings_items(
-                    server_settings, profile_name
-                )
+                new_items = _build_settings_items(server_settings, profile_name)
                 for item in new_items:
                     chat._emit("chat:register-settings-item", item.model_dump())
         elif key in ("temperature", "top_p", "max_completion_tokens"):
