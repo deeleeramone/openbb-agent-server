@@ -1163,9 +1163,7 @@ async def test_make_settings_change_handler_profile_switch_with_emit(
         handler("agent-profile", "default")
 
         # Should have called _emit for settings items.
-        assert (
-            True
-        )  # May or may not be called depending on profiles
+        assert True  # May or may not be called depending on profiles
     finally:
         await provider.runtime.aclose()
 
