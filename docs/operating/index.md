@@ -17,7 +17,7 @@ The five built-in backends with the headers each consumes and the `UserPrincipal
 The dual-layer schema. The SQLAlchemy ORM tables (`users`, `api_keys`, `conversations`, `messages`, `traces`, `runs`, `tool_calls`, `usage`, `artifacts`, `citations`, `pending_runs`, `widget_data`, `pdf_documents`, `pdf_pages`) are documented column-by-column with their primary and business keys. `SQLiteVec` vector tables (`memories_text`, `memories_code`, `pdf_pages_vec`) live in the same file under SQLite mode and are skipped under Postgres. Covers `init_schema()` bootstrap, `db_url` formats, and backup procedure.
 
 ### [Memory](memory.md)
-The memory pipeline configuration cross-referenced to the runtime flows — embedder providers (`nvidia`, `nvidia-code`, `hash`) with their vector dimensions, the `looks_like_code()` classifier that routes code chunks to the code-tuned embedder, the optional cross-encoder reranker with `rerank_fanout`, the auto-translator for non-English ingestion, the writers (`MemoryWriter` middleware, `ingest_request_context`) and readers (`recall_user_memory` tool, `GET /v1/memory`), and the right-to-erasure ordering (vector rows first, then SQLAlchemy cascade).
+The memory pipeline configuration cross-referenced to the runtime flows — embedder providers (`nvidia`, `nvidia-code`, `hash`) with their vector dimensions, the `looks_like_code()` classifier that routes code chunks to the code-tuned embedder, the optional cross-encoder reranker with `rerank_fanout`, the auto-translator for non-English ingestion, the active writer (`ingest_request_context`) plus optional post-run helper (`memory/writer.py`), readers (`recall_user_memory` tool, `GET /v1/memory`), and the right-to-erasure ordering (vector rows first, then SQLAlchemy cascade).
 
 ### [Observability](observability.md)
 Structured JSON-to-stdout logs with the trace contextvar attaching `trace_id`, `run_id`, `conversation_id`, and the hashed `user_id` to every line. Covers the PII redaction filter (emails, bearer tokens, API-key-shaped strings), `--log-level` including the in-package `trace` level, `usage` rows from `UsageRecorder` and how they are aggregated via `GET /v1/usage`, the `tool_calls` ledger (including the two-row pattern for client-side tool calls), the `GET /v1/traces/{id}` bundle, and the response headers (`X-Trace-ID`, `X-Server-Trace-ID`).
@@ -27,4 +27,4 @@ Structured JSON-to-stdout logs with the trace contextvar attaching `trace_id`, `
 - [`guides/`](../guides/index.md) — user-facing walk-throughs of the agent's surfaces.
 - [`developing/`](../developing/index.md) — writing plugins, conventions, the test harness.
 - [`reference/`](../reference/index.md) — symbol-level API reference.
-- [`docs/README.md`](../index.md) — the parent index.
+- [`docs/index.md`](../index.md) — the parent index.

@@ -33,7 +33,6 @@ Returns a JSON object **keyed by agent id** (one entry per profile). Agent ids m
     "features": {
       "streaming": true,
       "widget-dashboard-select": true,
-      "mcp-tools": true,
       "search-web": {
         "label": "Search Web",
         "description": "Allow the agent to search the public web.",
@@ -59,7 +58,7 @@ Returns a JSON object **keyed by agent id** (one entry per profile). Agent ids m
 
 Two value shapes:
 
-- **Reserved boolean capabilities** — a bare `bool`. Keys: `streaming`, `widget-dashboard-select`, `widget-dashboard-search`, `widget-global-search`, `mcp-tools`, `file-upload`, `generative-ui`.
+- **Reserved boolean capabilities** — a bare `bool`. Keys: `streaming`, `widget-dashboard-select`, `widget-dashboard-search`, `widget-global-search`, `file-upload`, `generative-ui`.
 - **Custom user toggles** — a `FeatureSpec` object that Workspace renders as an opt-in switch in the chat-input settings menu:
 
 | Field | Type | Req | Notes |

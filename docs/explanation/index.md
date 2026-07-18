@@ -1,7 +1,23 @@
 # Explanation
 
-Deep-dive notes and contracts that go beyond the auto-generated [API Reference](../reference/index.md). The API Reference renders module/class/function signatures and docstrings; the pages here carry the load-bearing *prose* — wire-level contracts, translation internals, and architectural constraints — that a signature alone cannot express.
+This section is intentionally small. It contains architecture contracts and internals that do not fit well in API docs.
 
-- [**Wire-protocol contract**](wire-contract.md) — the explicit Workspace ⇄ agent-server contract: `agents.json` + `/v1/query` request/response shapes, every artifact type, and emission ordering.
-- [**SSE adapter internals**](adapter.md) — how DeepAgents stream events are translated into OpenBB SSE: thinking/prose routing, citation de-duplication and relevance filtering, Harmony-format leak suppression.
-- [**Canvas rendering contract**](canvas.md) — PyWry's three rendering paths, the TVChart toolbar dual-dispatch shim, the datafeed-backed Symbol Search / Compare wiring, and MIME-dispatched document rendering.
+## Pages in this section
+
+1. [Wire-protocol contract](wire-contract.md)
+	 Workspace to server request/response contract (`agents.json` and `/v1/query`), event types, and ordering.
+2. [SSE adapter internals](adapter.md)
+	 How DeepAgents stream events are converted into OpenBB SSE payloads.
+3. [Canvas rendering contract](canvas.md)
+	 How the desktop canvas updates, renders content, and handles TVChart/document modes.
+
+## Where everything else is
+
+- [User Guides](../guides/index.md)
+	End-to-end workflows: Workspace integration, widgets, memory, multimodal, background jobs.
+- [Advanced Configuration](../operating/index.md)
+	Profiles, auth, persistence, memory, observability.
+- [Developing Plugins](../developing/index.md)
+	Tool/model/middleware/subagent/auth extension guides.
+- [API Reference](../reference/index.md)
+	Module/class/function signatures generated from code docstrings.

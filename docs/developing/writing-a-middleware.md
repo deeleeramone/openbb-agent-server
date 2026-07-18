@@ -125,14 +125,15 @@ Special-case `GraphBubbleUp` — it's LangGraph's interrupt signal, not a tool f
 
 Middleware in the profile list runs **outer-to-inner**. The first entry wraps the second, etc. Inside `wrap_model_call`, `handler` is the next middleware down — you can choose to short-circuit (don't call `handler`) to skip the rest, or pre/post-process around it.
 
-Suggested order (matches the default profile):
+The default profile's order (`app/settings.py`):
 
-1. `tool_call_announcer` (outermost — observe everything that follows)
-2. `tool_call_ledger` (next — record what happened)
-3. `usage_recorder` (record token usage from model responses)
-4. `tool_filter` (drop tools the agent shouldn't see)
-5. `tool_message_normaliser` (rewrite messages right before they hit the model)
-6. `call_limit` / `tool_call_limit` (hard caps — innermost so they see the final shape)
+1. `tool_message_normaliser` (outermost — rewrite tool messages before the rest of the stack sees them)
+2. `tool_filter` (drop tools the agent shouldn't see)
+3. `tool_call_announcer` (announce each tool call on the stream)
+4. `usage_recorder` (record token usage from model responses)
+5. `tool_call_ledger` (record what happened)
+6. `loop_guard` (detect and break repeated-call loops)
+7. `call_limit` / `tool_call_limit` (hard caps — innermost so they see the final shape)
 
 ## Tests
 

@@ -53,7 +53,7 @@ tool_calls(trace_id, seq, user_id, tool_name, args_json, result_json,
            error, latency_ms, side, state)
 ```
 
-`side` is `server` for in-process tools. Client-side tool calls (the Workspace MCP roundtrip) get two rows — one when the `FunctionCallSSE` is emitted (`state="pending"`) and one when the next request returns the result (`state="complete"` or `state="error"`).
+`side` is `server` for in-process tools. Client-side tool calls (the `copilotFunctionCall` roundtrip through the Workspace UI) get two rows — one when the `FunctionCallSSE` is emitted (`state="pending"`) and one when the next request returns the result (`state="complete"` or `state="error"`).
 
 ## Trace bundle
 

@@ -377,8 +377,12 @@ class OpenBBAgentProvider(ChatProvider):
     ) -> list[SessionConfigOption]:
         """Build ``SessionConfigOption`` list from profile features.
 
-        Features whose value is a dict with ``label`` / ``description``
-        (like ``search-web`` and ``fetch-url``) become toggle options.
+        Boolean features (``search-web``, ``fetch-url``, ...) become
+        on/off toggles. Select features (model parameters, reasoning
+        effort, ...) become dropdowns. Text features are also surfaced
+        as dropdowns using the feature's ``options`` list so the native
+        PyWry chat can control them.
+
         The current value is read from ``workspace_options``.
         """
         prof = self._runtime.settings.resolve_profile(profile_name)
@@ -386,22 +390,62 @@ class OpenBBAgentProvider(ChatProvider):
         for key, spec in prof.features.items():
             if not isinstance(spec, dict) or "label" not in spec:
                 continue
+            feature_type = spec.get("type", "boolean")
             default = spec.get("default", False)
             current = workspace_options.get(key, default)
-            options.append(
-                SessionConfigOption(
-                    id=key,
-                    name=spec["label"],
-                    description=spec.get("description"),
-                    category="feature",
-                    type="select",
-                    currentValue="on" if current else "off",
-                    options=[
-                        ConfigOptionChoice(value="on", name="On"),
-                        ConfigOptionChoice(value="off", name="Off"),
-                    ],
+            if feature_type == "select":
+                choices = [
+                    ConfigOptionChoice(value=str(opt.get("value", opt)), name=str(opt.get("label", opt.get("value", opt))))
+                    for opt in (spec.get("options") or [])
+                    if isinstance(opt, dict)
+                ]
+                if not choices:
+                    continue
+                options.append(
+                    SessionConfigOption(
+                        id=key,
+                        name=spec["label"],
+                        description=spec.get("description"),
+                        category=spec.get("category", "feature"),
+                        type="select",
+                        currentValue=str(current),
+                        options=choices,
+                    )
                 )
-            )
+            elif feature_type == "text":
+                # PyWry only supports select options, so promote text
+                # features to a small preset dropdown.
+                preset_values = spec.get("options") or [str(default)]
+                choices = [
+                    ConfigOptionChoice(value=str(val), name=str(val))
+                    for val in preset_values
+                ]
+                options.append(
+                    SessionConfigOption(
+                        id=key,
+                        name=spec["label"],
+                        description=spec.get("description"),
+                        category=spec.get("category", "feature"),
+                        type="select",
+                        currentValue=str(current),
+                        options=choices,
+                    )
+                )
+            else:
+                options.append(
+                    SessionConfigOption(
+                        id=key,
+                        name=spec["label"],
+                        description=spec.get("description"),
+                        category="feature",
+                        type="select",
+                        currentValue="on" if current else "off",
+                        options=[
+                            ConfigOptionChoice(value="on", name="On"),
+                            ConfigOptionChoice(value="off", name="Off"),
+                        ],
+                    )
+                )
         return options
 
     def _on_persistent_loop(self) -> bool:
@@ -796,42 +840,109 @@ def _build_settings_items(
     prof = server_settings.resolve_profile(active_profile)
 
     items.append(SettingsItem(id="separator-model", type="separator"))
-    temperature = prof.model_config_.get("temperature", 0.4)
-    items.append(
-        SettingsItem(
-            id="temperature",
-            label="Temperature",
-            type="range",
-            value=temperature,
-            min=0.0,
-            max=2.0,
-            step=0.1,
+
+    def _add_range(id_: str, label: str, value: float | int, min_: float | int, max_: float | int, step: float | int) -> None:
+        items.append(
+            SettingsItem(
+                id=id_,
+                label=label,
+                type="range",
+                value=value,
+                min=min_,
+                max=max_,
+                step=step,
+            )
         )
-    )
-    top_p = prof.model_config_.get("top_p", 0.95)
-    items.append(
-        SettingsItem(
-            id="top_p",
-            label="Top P",
-            type="range",
-            value=top_p,
-            min=0.0,
-            max=1.0,
-            step=0.05,
+
+    def _add_select(id_: str, label: str, value: str, options: list[str]) -> None:
+        items.append(
+            SettingsItem(
+                id=id_,
+                label=label,
+                type="select",
+                value=value,
+                options=options,
+            )
         )
-    )
-    max_tokens = prof.model_config_.get("max_completion_tokens", 8192)
-    items.append(
-        SettingsItem(
-            id="max_completion_tokens",
-            label="Max Tokens",
-            type="range",
-            value=max_tokens,
-            min=256,
-            max=32768,
-            step=256,
+
+    def _add_toggle(id_: str, label: str, value: bool) -> None:
+        items.append(
+            SettingsItem(
+                id=id_,
+                label=label,
+                type="toggle",
+                value=value,
+            )
         )
+
+    cfg = prof.model_config_
+    extra = cfg.get("extra_body", {})
+    chat_template_kwargs = cfg.get("chat_template_kwargs", {})
+
+    _add_range(
+        "temperature",
+        "Temperature",
+        cfg.get("temperature", 0.4),
+        min_=0.0,
+        max_=2.0,
+        step=0.01,
     )
+    _add_range(
+        "top_p",
+        "Top P",
+        cfg.get("top_p", 0.95),
+        min_=0.0,
+        max_=1.0,
+        step=0.01,
+    )
+    _add_range(
+        "max_completion_tokens",
+        "Max Tokens",
+        cfg.get("max_completion_tokens", 8192),
+        min_=256,
+        max_=1048576,
+        step=1,
+    )
+    if "frequency_penalty" in cfg:
+        _add_range(
+            "frequency_penalty",
+            "Frequency Penalty",
+            cfg["frequency_penalty"],
+            min_=-2.0,
+            max_=2.0,
+            step=0.01,
+        )
+    if "presence_penalty" in cfg:
+        _add_range(
+            "presence_penalty",
+            "Presence Penalty",
+            cfg["presence_penalty"],
+            min_=-2.0,
+            max_=2.0,
+            step=0.01,
+        )
+    if "reasoning_effort" in extra or "reasoning_effort" in cfg:
+        _add_select(
+            "reasoning_effort",
+            "Reasoning Effort",
+            extra.get("reasoning_effort") or cfg.get("reasoning_effort", "medium"),
+            options=["low", "medium", "high"],
+        )
+    if "thinking_budget" in extra:
+        _add_range(
+            "thinking_budget",
+            "Thinking Budget",
+            extra["thinking_budget"],
+            min_=256,
+            max_=32768,
+            step=1,
+        )
+    if "enable_thinking" in chat_template_kwargs:
+        _add_toggle(
+            "enable_thinking",
+            "Enable Thinking",
+            bool(chat_template_kwargs["enable_thinking"]),
+        )
 
     # -- Feature toggles ----------------------------------------------------
     has_features = False
@@ -889,12 +1000,26 @@ def _make_settings_change_handler(
                 new_items = _build_settings_items(server_settings, profile_name)
                 for item in new_items:
                     chat._emit("chat:register-settings-item", item.model_dump())
-        elif key in ("temperature", "top_p", "max_completion_tokens"):
-            coerced: int | float = (
-                int(value) if key == "max_completion_tokens" else float(value)
-            )
+        elif key in ("temperature", "top_p", "max_completion_tokens", "frequency_penalty", "presence_penalty", "thinking_budget"):
+            coerced: int | float | bool | str
+            if key in ("max_completion_tokens", "thinking_budget"):
+                coerced = int(value)
+            else:
+                coerced = float(value)
             for session in provider._sessions.values():
-                session.model_config_overrides[key] = coerced
+                if key in ("thinking_budget",):
+                    session.model_config_overrides.setdefault("extra_body", {})
+                    session.model_config_overrides["extra_body"][key] = coerced
+                else:
+                    session.model_config_overrides[key] = coerced
+        elif key == "reasoning_effort":
+            for session in provider._sessions.values():
+                session.model_config_overrides.setdefault("extra_body", {})
+                session.model_config_overrides["extra_body"]["reasoning_effort"] = str(value)
+        elif key == "enable_thinking":
+            for session in provider._sessions.values():
+                session.model_config_overrides.setdefault("chat_template_kwargs", {})
+                session.model_config_overrides["chat_template_kwargs"]["enable_thinking"] = bool(value)
         else:
             # Feature toggle.
             for session in provider._sessions.values():

@@ -23,10 +23,10 @@ The runtime resolves six plugin groups from Python entry points. Each ABC lives 
 | Entry-point group | ABC | Built-ins |
 | --- | --- | --- |
 | `openbb_agent_server.auth` | `AuthBackend` | `none`, `bearer_static`, `api_key_table`, `oidc_jwt`, `openbb_workspace` |
-| `openbb_agent_server.models` | `ModelProvider` | `anthropic`, `openai`, `openai_compat`, `bedrock`, `vertex`, `google_genai`, `groq`, `nvidia`, `fake` |
+| `openbb_agent_server.model_providers` | `ModelProvider` | `anthropic`, `openai`, `openai_compat`, `bedrock`, `vertex`, `google_genai`, `groq`, `nvidia`, `fake` |
 | `openbb_agent_server.tools` | `ToolSource` | `artifacts`, `web_search`, `fetch_url`, `widget_data`, `pdf_extract`, `dashboard`, `vision_qa`, `gemini_image`, `mcp_local`, `mcp_http`, `pywry_canvas`, … |
 | `openbb_agent_server.middleware` | `Middleware` | `call_limit`, `tool_call_limit`, `tool_call_announcer`, `tool_call_ledger`, `tool_filter`, `tool_message_normaliser`, `loop_guard`, `usage_recorder` |
-| `openbb_agent_server.subagents` | `SubAgentSpec` | `researcher`, `analyst`, `charter`, `pdf_reader` |
+| `openbb_agent_server.subagents` | `SubAgentSpec` | `researcher`, `analyst`, `charter`, `pdf_reader`, plus model-profile subagents (`deepseek-v4-flash`, `nemotron-3-super`, `qwen3.5`, `minimax-m3`, …) |
 | `openbb_agent_server.checkpointers` | `CheckpointerProvider` | `sqlite`, `postgres`, `inmemory` |
 
 See [Developing Plugins](developing/index.md) to add your own.

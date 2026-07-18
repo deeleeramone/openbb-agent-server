@@ -118,6 +118,10 @@ class SubAgentSpec(Protocol):
         Names of the tools the sub-agent is permitted to use.
     model : str | None
         Optional model override; ``None`` falls back to the default model.
+    model_profile : str | None
+        Optional configured profile name to use as the subagent model.
+        When set, the runtime resolves the profile and passes its model
+        name to the subagent, enabling delegation to specialist models.
     """
 
     name: str
@@ -125,6 +129,7 @@ class SubAgentSpec(Protocol):
     system_prompt: str
     tools: tuple[str, ...]
     model: str | None
+    model_profile: str | None
 
 
 class Middleware(ABC):

@@ -62,7 +62,6 @@ _RESERVED_BOOLEAN_FEATURES: frozenset[str] = frozenset(
         "widget-dashboard-select",
         "widget-dashboard-search",
         "widget-global-search",
-        "mcp-tools",
         "file-upload",
         "generative-ui",
     }
@@ -749,7 +748,7 @@ def _post_run_extractor(profile: AgentProfile, ctx: RunContext) -> Any | None:
     """Build a fresh extractor model for the post-run memory writer."""
     try:
         provider = registry.load(
-            "openbb_agent_server.models",
+            "openbb_agent_server.model_providers",
             profile.model_provider,
             {"model_name": profile.model_name, **profile.model_config_},
         )

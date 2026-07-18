@@ -9,13 +9,14 @@ This guide covers the second one.
 
 ## What gets remembered
 
-Anything the agent writes to `MemoryStore.write`. Three flows produce memory writes:
+Anything written to `MemoryStore.write` for the current `user_id`.
+
+In the default HTTP server flow, writes come from request-time ingestion:
 
 | Source | Trigger | Default state |
 | --- | --- | --- |
-| `MemoryWriter` middleware | Post-turn — a small extractor model pulls durable facts from the assistant's reply. | **Off** — opt-in per user. |
 | `ingest_request_context` | Long uploaded files / messages get chunked + embedded at request time. | On when the user has `memory:write` scope. |
-| Agent-callable `write_memory` tool | The agent itself decides to remember something. | Available when `memory:write` is granted. |
+| `memory/writer.py` helper | Optional post-run extractor helper for custom integrations. | Not wired into the default middleware list. |
 
 All writes are scoped to `principal.user_id`; cross-user reads are physically impossible — the SQL queries filter on `json_extract(metadata, '$.user_id')`.
 
@@ -47,14 +48,14 @@ The two-stage shape (broad ANN fanout → narrow cross-encoder rerank) follows t
 ```toml
 # openbb.toml
 [agent]
-embeddings_provider = "nvidia"             # or "hash" (default), or "nvidia-code"
+embeddings_provider = "nvidia"             # default
 embeddings_model = "nvidia/nv-embed-v1"    # optional override
 embeddings_code_provider = "nvidia-code"   # routes _code rows to nv-embedcode
 embeddings_code_model = "nvidia/nv-embedcode-7b-v1"
 reranker_provider = "nvidia"               # empty string disables
 reranker_model = "nv-rerank-qa-mistral-4b:1"
 translation_provider = "nvidia"            # empty string disables
-translation_model = "nvidia/riva-translate-4b-instruct-v1_1"
+translation_model = "nvidia/riva-translate-4b-instruct"
 translate_for_ingestion = true             # auto-translate non-English chunks before embedding
 rerank_fanout = 32                         # ANN pool size before rerank
 ```

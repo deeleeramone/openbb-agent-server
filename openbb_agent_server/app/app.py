@@ -159,8 +159,7 @@ def create_app(settings: AgentServerSettings | None = None) -> FastAPI:
     install trace logging, load the auth and checkpointer plugins, build
     the shared stores, register the API router, and attach a lifespan that
     initialises the history schema, opens the checkpointer, and runs the
-    optional retention prune sweep. Optionally mounts the workspace-mcp
-    sub-app when enabled.
+    optional retention prune sweep.
 
     Parameters
     ----------
@@ -260,40 +259,8 @@ def create_app(settings: AgentServerSettings | None = None) -> FastAPI:
         ),
     )
 
-    if settings.mount_workspace_mcp:
-        _mount_workspace_mcp(app, settings)
-
     app.state.settings = settings
     app.state.auth = auth
     app.state.history = history
     app.state.memory = memory
     return app
-
-
-def _mount_workspace_mcp(app: FastAPI, settings: AgentServerSettings) -> None:
-    """Mount the optional workspace-mcp Starlette sub-app at /mcp/workspace.
-
-    Soft-skips with a single info log when the ``[workspace-mcp]`` extra is
-    not installed. Operators install it with::
-
-        pip install 'openbb-agent-server[workspace-mcp]'
-    """
-    try:
-        from workspace_mcp.app import create_app as _create_workspace_mcp
-        from workspace_mcp.config import Settings as _WorkspaceMcpSettings
-    except ImportError:
-        logger.info(
-            "workspace-mcp extra not installed; in-process mount skipped. "
-            "Install with: pip install 'openbb-agent-server[workspace-mcp]'"
-        )
-        return
-
-    try:
-        wm_settings = _WorkspaceMcpSettings(**settings.workspace_mcp_config)
-        app.mount("/mcp/workspace", _create_workspace_mcp(wm_settings))
-        logger.info("Mounted workspace-mcp at /mcp/workspace")
-    except Exception:  # noqa: BLE001 — mount failure must not break the parent app
-        logger.warning(
-            "workspace-mcp mount failed; continuing without it",
-            exc_info=True,
-        )

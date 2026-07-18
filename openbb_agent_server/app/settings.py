@@ -9,6 +9,8 @@ from typing import Any
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+_SKILLS_DIR: Path = Path(__file__).resolve().parent.parent / "skills"
+
 
 class FeatureSpec(BaseSettings):
     """Describe one toggleable feature row in the ``agents.json`` map.
@@ -134,7 +136,6 @@ DEFAULT_FEATURES: dict[str, Any] = {
     "widget-dashboard-select": True,
     "widget-dashboard-search": True,
     "widget-global-search": True,
-    "mcp-tools": True,
     "file-upload": True,
     "generative-ui": True,
     SEARCH_WEB_FEATURE: {
@@ -145,7 +146,7 @@ DEFAULT_FEATURES: dict[str, Any] = {
             "Off by default — turn on for queries about current events "
             "or anything outside the model's training data."
         ),
-        "default": False,
+        "default": False
     },
     FETCH_URL_FEATURE: {
         "label": "Fetch URL",
@@ -155,8 +156,8 @@ DEFAULT_FEATURES: dict[str, Any] = {
             "cloud-metadata hosts are refused. Off by default — turn on to "
             "let the agent read the article behind a link."
         ),
-        "default": False,
-    },
+        "default": False
+    }
 }
 
 
@@ -176,10 +177,6 @@ class AgentServerSettings(BaseSettings):
         Address the HTTP server binds to.
     port : int
         TCP port the HTTP server listens on.
-    mount_workspace_mcp : bool
-        Whether to mount the bundled Workspace MCP server in-process.
-    workspace_mcp_config : dict[str, Any]
-        Keyword configuration for the mounted Workspace MCP server.
     auth_backend : str
         Name of the :class:`~openbb_agent_server.runtime.plugins.AuthBackend`
         plugin used to authenticate requests.
@@ -290,18 +287,16 @@ class AgentServerSettings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = 6900
 
-    mount_workspace_mcp: bool = False
-    workspace_mcp_config: dict[str, Any] = Field(default_factory=dict)
-
     auth_backend: str = "none"
     auth_config: dict[str, Any] = Field(default_factory=dict)
 
     model_provider: str = "nvidia"
     model_config_: dict[str, Any] = Field(
         default_factory=lambda: {
-            "temperature": 0.4,
+            "temperature": 0.3,
             "max_completion_tokens": 8192,
             "top_p": 0.95,
+            "chat_template_kwargs": {"enable_thinking": True}
         },
         alias="model_config",
     )
@@ -319,7 +314,7 @@ class AgentServerSettings(BaseSettings):
         "translate",
         "rerank",
         "vision_qa",
-        "workspace_mcp",
+        "nemotron_ocr",
     )
 
     tool_source_config: dict[str, dict[str, Any]] = Field(default_factory=dict)
@@ -329,6 +324,19 @@ class AgentServerSettings(BaseSettings):
         "charter",
         "analyst",
         "pdf_reader",
+        "deepseek-v4-flash",
+        "deepseek-v4-pro",
+        "nemotron-3-super",
+        "nemotron-ultra",
+        "nemotron-3-ultra",
+        "nemotron-3-nano",
+        "mistral-small-4",
+        "llama-4-maverick",
+        "gemma-4",
+        "gpt-oss-120b",
+        "glm-5.1",
+        "qwen3.5",
+        "minimax-m3",
     )
     middleware: tuple[str, ...] = (
         "tool_message_normaliser",
@@ -341,7 +349,7 @@ class AgentServerSettings(BaseSettings):
         "tool_call_limit",
     )
 
-    skills: tuple[str, ...] = ()
+    skills: tuple[str, ...] = (str(_SKILLS_DIR),)
 
     system_prompt_file: str | None = None
 
@@ -366,7 +374,7 @@ class AgentServerSettings(BaseSettings):
     rerank_fanout: int = 32
 
     translation_provider: str | None = "nvidia"
-    translation_model: str | None = "nvidia/riva-translate-4b-instruct-v1_1"
+    translation_model: str | None = "nvidia/riva-translate-4b-instruct"
     translation_config: dict[str, Any] = Field(default_factory=dict)
     translate_for_ingestion: bool = True
     ingest_target_language: str = "English"
@@ -395,7 +403,7 @@ class AgentServerSettings(BaseSettings):
                         "document synthesis, quantitative analysis, and "
                         "chart / table OCR. Best with images cropped to "
                         "a near-1:1 aspect ratio."
-                    ),
+                    )
                 },
                 "model": {
                     "provider": "nvidia",
@@ -403,36 +411,36 @@ class AgentServerSettings(BaseSettings):
                     "config": {
                         "temperature": 0.05,
                         "max_completion_tokens": 16384,
-                        "top_p": 0.9,
-                    },
+                        "top_p": 0.9
+                    }
                 },
                 "tool_source_config": {
                     "vision_qa": {
-                        "model": "mistralai/mistral-large-3-675b-instruct-2512",
-                    },
-                },
+                        "model": "mistralai/mistral-large-3-675b-instruct-2512"
+                    }
+                }
             },
             "transcribe": {
                 "metadata": {
                     "name": "OpenBB · Transcribe (Gemma-3n)",
                     "description": (
-                        "Audio / video transcription specialist on "
-                        "``google/gemma-3n-e4b-it``. Accepts text + image + "
-                        "audio in a single turn, returns text. Use when "
-                        "the user attaches an audio or video clip and "
-                        "wants a transcript, summary, or per-speaker "
-                        "breakdown. 32K-token context, single-channel "
-                        "audio."
-                    ),
+                        "Audio / video transcription specialist. The "
+                        "chat head is Step-3.5-Flash; audio/video "
+                        "content is transcribed via the ``gemma_audio`` "
+                        "tool. Use when the user attaches an audio or "
+                        "video clip and wants a transcript, summary, or "
+                        "per-speaker breakdown."
+                    )
                 },
                 "model": {
                     "provider": "nvidia",
-                    "name": "google/gemma-3n-e4b-it",
+                    "name": "stepfun-ai/step-3.5-flash",
                     "config": {
-                        "temperature": 0.05,
-                        "max_completion_tokens": 16384,
+                        "temperature": 0.2,
+                        "max_completion_tokens": 8192,
                         "top_p": 0.9,
-                    },
+                        "extra_body": {"reasoning_effort": "low"}
+                    }
                 },
                 "tool_sources": [
                     "artifacts",
@@ -441,28 +449,29 @@ class AgentServerSettings(BaseSettings):
                     "paligemma_vision",
                     "inspect_widget_data",
                 ],
-                "subagents": [],
+                "subagents": []
             },
-            "qwen3-coder": {
+            "qwen3.5": {
                 "metadata": {
-                    "name": "OpenBB · Qwen3 Coder (480B)",
+                    "name": "OpenBB · Qwen3.5 (122B)",
                     "description": (
-                        "Code-generation specialist on "
-                        "``qwen/qwen3-coder-480b-a35b-instruct`` (480B "
-                        "MoE, 35B active). Tuned for OpenBB Platform "
-                        "scripting, SQL drafting, and quantitative "
-                        "snippets — pair with the ``mcp_local`` tool "
-                        "source for end-to-end execution."
-                    ),
+                        "Code and reasoning specialist on "
+                        "``qwen/qwen3.5-122b-a10b``. Tuned for OpenBB "
+                        "Platform scripting, SQL drafting, and "
+                        "quantitative snippets — pair with the "
+                        "``mcp_local`` tool source for end-to-end "
+                        "execution."
+                    )
                 },
                 "model": {
                     "provider": "nvidia",
-                    "name": "qwen/qwen3-coder-480b-a35b-instruct",
+                    "name": "qwen/qwen3.5-122b-a10b",
                     "config": {
                         "temperature": 0.2,
                         "max_completion_tokens": 16384,
                         "top_p": 0.95,
-                    },
+                        "chat_template_kwargs": {"enable_thinking": True}
+                    }
                 },
                 "tool_sources": [
                     "artifacts",
@@ -471,9 +480,8 @@ class AgentServerSettings(BaseSettings):
                     "pdf_extract",
                     "recall_user_memory",
                     "web_search",
-                    "workspace_mcp",
                 ],
-                "subagents": ["analyst"],
+                "subagents": ["analyst"]
             },
             "seed-oss": {
                 "metadata": {
@@ -485,7 +493,7 @@ class AgentServerSettings(BaseSettings):
                         "latency-bound chat; raise it for multi-hop "
                         "synthesis. Same tool surface as the default "
                         "agent."
-                    ),
+                    )
                 },
                 "model": {
                     "provider": "nvidia",
@@ -494,9 +502,394 @@ class AgentServerSettings(BaseSettings):
                         "temperature": 0.3,
                         "max_completion_tokens": 8192,
                         "top_p": 0.9,
-                        "extra_body": {"thinking_budget": 1024},
-                    },
+                        "extra_body": {"thinking_budget": 1024}
+                    }
+                }
+            },
+            "deepseek-v4-flash": {
+                "metadata": {
+                    "name": "OpenBB · DeepSeek-V4 Flash",
+                    "description": (
+                        "Fast, high-capacity reasoning model for "
+                        "OpenBB workflows. Strong at coding, math, and "
+                        "multi-step financial analysis with a 1M-token "
+                        "context window and high-throughput inference."
+                    )
                 },
+                "model": {
+                    "provider": "nvidia",
+                    "name": "deepseek-ai/deepseek-v4-flash",
+                    "config": {
+                        "temperature": 0.4,
+                        "max_completion_tokens": 16384,
+                        "top_p": 0.95,
+                        "chat_template_kwargs": {
+                            "thinking": True,
+                            "reasoning_effort": "high"
+                        }
+                    }
+                }
+            },
+            "deepseek-v4-pro": {
+                "metadata": {
+                    "name": "OpenBB · DeepSeek-V4 Pro",
+                    "description": (
+                        "Largest DeepSeek reasoning model on NVIDIA NIM. "
+                        "Best for deep research, complex quantitative "
+                        "work, and long-document synthesis when latency "
+                        "is acceptable."
+                    )
+                },
+                "model": {
+                    "provider": "nvidia",
+                    "name": "deepseek-ai/deepseek-v4-pro",
+                    "config": {
+                        "temperature": 0.3,
+                        "max_completion_tokens": 32768,
+                        "top_p": 0.95,
+                        "chat_template_kwargs": {
+                            "thinking": True,
+                            "reasoning_effort": "high"
+                        }
+                    }
+                }
+            },
+            "nemotron-3-super": {
+                "metadata": {
+                    "name": "OpenBB · Nemotron-3 Super (120B)",
+                    "description": (
+                        "NVIDIA Nemotron-3 Super 120B MoE on NIM — "
+                        "general-purpose reasoning with up to a 1M "
+                        "context window. Strong default for analysis, "
+                        "coding, tool use, and long-context synthesis."
+                    )
+                },
+                "model": {
+                    "provider": "nvidia",
+                    "name": "nvidia/nemotron-3-super-120b-a12b",
+                    "config": {
+                        "temperature": 0.3,
+                        "max_completion_tokens": 16384,
+                        "top_p": 0.95,
+                        "chat_template_kwargs": {"enable_thinking": True}
+                    }
+                }
+            },
+            "nemotron-ultra": {
+                "metadata": {
+                    "name": "OpenBB · Nemotron Ultra (49B)",
+                    "description": (
+                        "NVIDIA Llama-3.3 Nemotron Super 49B v1.5 on NIM — "
+                        "current-generation Nemotron reasoning model for "
+                        "complex analysis, coding, and long-document "
+                        "synthesis."
+                    )
+                },
+                "model": {
+                    "provider": "nvidia",
+                    "name": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+                    "config": {
+                        "temperature": 0.3,
+                        "max_completion_tokens": 16384,
+                        "top_p": 0.95
+                    }
+                }
+            },
+            "nemotron-3-ultra": {
+                "metadata": {
+                    "name": "OpenBB · Nemotron-3 Ultra (550B)",
+                    "description": (
+                        "NVIDIA Nemotron-3 Ultra 550B on NIM — frontier "
+                        "reasoning model with 1M-token context, tool use, "
+                        "and long-context analysis. Best for deep research, "
+                        "complex coding, and high-stakes synthesis."
+                    )
+                },
+                "model": {
+                    "provider": "nvidia",
+                    "name": "nvidia/nemotron-3-ultra-550b-a55b",
+                    "config": {
+                        "temperature": 0.3,
+                        "max_completion_tokens": 32768,
+                        "top_p": 0.95,
+                        "chat_template_kwargs": {"enable_thinking": True}
+                    }
+                }
+            },
+            "nemotron-3-nano": {
+                "metadata": {
+                    "name": "OpenBB · Nemotron-3 Nano (30B)",
+                    "description": (
+                        "Fast, efficient text-only reasoning model on "
+                        "NVIDIA NIM. Use for low-latency analysis, "
+                        "summaries, and lightweight coding tasks."
+                    )
+                },
+                "model": {
+                    "provider": "nvidia",
+                    "name": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+                    "config": {
+                        "temperature": 0.3,
+                        "max_completion_tokens": 4096,
+                        "top_p": 0.95,
+                        "chat_template_kwargs": {"enable_thinking": True}
+                    }
+                }
+            },
+            "mistral-small-4": {
+                "metadata": {
+                    "name": "OpenBB · Mistral Small 4 (119B)",
+                    "description": (
+                        "Mistral Small 4 on NVIDIA NIM — multimodal "
+                        "text/image reasoning with configurable "
+                        "``reasoning_effort``. Strong for visual "
+                        "dashboards, chart/table OCR, and image-grounded "
+                        "analysis."
+                    )
+                },
+                "model": {
+                    "provider": "nvidia",
+                    "name": "mistralai/mistral-small-4-119b-2603",
+                    "config": {
+                        "temperature": 0.3,
+                        "max_completion_tokens": 16384,
+                        "top_p": 0.9,
+                        "reasoning_effort": "high"
+                    }
+                },
+                "tool_sources": [
+                    "artifacts",
+                    "widget_data",
+                    "inspect_widget_data",
+                    "pdf_extract",
+                    "recall_user_memory",
+                    "translate",
+                    "web_search",
+                    "fetch_url",
+                    "vision_qa",
+                    "nemotron_ocr",
+                    "gemma_audio",
+                    "paligemma_vision",
+                ],
+                "tool_source_config": {
+                    "vision_qa": {
+                        "model": "mistralai/mistral-small-4-119b-2603"
+                    }
+                },
+                "features": {
+                    "file-upload": True
+                }
+            },
+            "llama-4-maverick": {
+                "metadata": {
+                    "name": "OpenBB · Llama 4 Maverick",
+                    "description": (
+                        "Meta Llama 4 Maverick 400B MoE on NVIDIA NIM — "
+                        "multimodal text/image generalist with a 1M "
+                        "context window. Best for visual dashboards, "
+                        "chart analysis, and image-grounded research."
+                    )
+                },
+                "model": {
+                    "provider": "nvidia",
+                    "name": "meta/llama-4-maverick-17b-128e-instruct",
+                    "config": {
+                        "temperature": 0.3,
+                        "max_completion_tokens": 16384,
+                        "top_p": 0.9
+                    }
+                },
+                "tool_sources": [
+                    "artifacts",
+                    "widget_data",
+                    "inspect_widget_data",
+                    "pdf_extract",
+                    "recall_user_memory",
+                    "translate",
+                    "web_search",
+                    "fetch_url",
+                    "vision_qa",
+                    "nemotron_ocr",
+                    "gemma_audio",
+                    "paligemma_vision",
+                ],
+                "tool_source_config": {
+                    "vision_qa": {
+                        "model": "meta/llama-4-maverick-17b-128e-instruct"
+                    }
+                },
+                "features": {
+                    "file-upload": True
+                }
+            },
+            "llama-4-scout": {
+                "metadata": {
+                    "name": "OpenBB · Llama 4 Scout",
+                    "description": (
+                        "Meta Llama 4 Scout on NVIDIA NIM — dense "
+                        "multimodal generalist with native tool use and "
+                        "a 256K context window. Good for vision + tool "
+                        "workflows."
+                    )
+                },
+                "model": {
+                    "provider": "nvidia",
+                    "name": "meta/llama-4-scout-17b-16e-instruct",
+                    "config": {
+                        "temperature": 0.3,
+                        "max_completion_tokens": 8192,
+                        "top_p": 0.9
+                    }
+                },
+                "tool_sources": [
+                    "artifacts",
+                    "widget_data",
+                    "inspect_widget_data",
+                    "pdf_extract",
+                    "recall_user_memory",
+                    "web_search",
+                    "fetch_url",
+                    "vision_qa",
+                    "nemotron_ocr",
+                    "gemma_audio",
+                    "paligemma_vision",
+                ],
+                "tool_source_config": {
+                    "vision_qa": {
+                        "model": "meta/llama-4-scout-17b-16e-instruct"
+                    }
+                },
+                "features": {
+                    "file-upload": True
+                }
+            },
+            "minimax-m3": {
+                "metadata": {
+                    "name": "OpenBB · MiniMax M3",
+                    "description": (
+                        "MiniMax M3 on NVIDIA NIM — 428B MoE "
+                        "multimodal vision-language model with tool "
+                        "use, a 1M-token context window, and support "
+                        "for text, image, and long-form video input. "
+                        "Use for vision + tool workflows, video "
+                        "understanding, and agentic research."
+                    )
+                },
+                "model": {
+                    "provider": "nvidia",
+                    "name": "minimaxai/minimax-m3",
+                    "config": {
+                        "temperature": 0.3,
+                        "max_completion_tokens": 8192,
+                        "top_p": 0.9
+                    }
+                },
+                "tool_sources": [
+                    "artifacts",
+                    "widget_data",
+                    "inspect_widget_data",
+                    "pdf_extract",
+                    "recall_user_memory",
+                    "translate",
+                    "web_search",
+                    "fetch_url",
+                    "vision_qa",
+                    "nemotron_ocr",
+                    "gemma_audio",
+                    "paligemma_vision",
+                ],
+                "tool_source_config": {
+                    "vision_qa": {
+                        "model": "minimaxai/minimax-m3"
+                    }
+                },
+                "features": {
+                    "file-upload": True
+                }
+            },
+            "gemma-4": {
+                "metadata": {
+                    "name": "OpenBB · Gemma 4 (31B)",
+                    "description": (
+                        "Google Gemma 4 31B on NVIDIA NIM — dense "
+                        "multimodal text/image/video model with a 256K "
+                        "context window. Lightweight option for chart "
+                        "OCR, visual Q&A, and short video clips."
+                    )
+                },
+                "model": {
+                    "provider": "nvidia",
+                    "name": "google/gemma-4-31b-it",
+                    "config": {
+                        "temperature": 0.3,
+                        "max_completion_tokens": 8192,
+                        "top_p": 0.95,
+                        "chat_template_kwargs": {"enable_thinking": True}
+                    }
+                },
+                "tool_sources": [
+                    "artifacts",
+                    "widget_data",
+                    "inspect_widget_data",
+                    "pdf_extract",
+                    "recall_user_memory",
+                    "translate",
+                    "web_search",
+                    "fetch_url",
+                    "vision_qa",
+                    "nemotron_ocr",
+                    "gemma_audio",
+                    "paligemma_vision",
+                ],
+                "tool_source_config": {
+                    "vision_qa": {
+                        "model": "google/gemma-4-31b-it"
+                    }
+                },
+                "features": {
+                    "file-upload": True
+                }
+            },
+            "gpt-oss-120b": {
+                "metadata": {
+                    "name": "OpenBB · GPT-OSS 120B",
+                    "description": (
+                        "OpenAI GPT-OSS 120B on NVIDIA NIM — open "
+                        "weight model with strong tool use and structured "
+                        "output support. Good for agentic workflows that "
+                        "need reproducible JSON or SQL."
+                    )
+                },
+                "model": {
+                    "provider": "nvidia",
+                    "name": "openai/gpt-oss-120b",
+                    "config": {
+                        "temperature": 0.3,
+                        "max_completion_tokens": 8192,
+                        "top_p": 0.95
+                    }
+                }
+            },
+            "glm-5.1": {
+                "metadata": {
+                    "name": "OpenBB · GLM 5.1",
+                    "description": (
+                        "Zhipu GLM 5.1 on NVIDIA NIM — long-context "
+                        "MoE text model with up to a 1M context window "
+                        "and thinking support. Use for multi-document "
+                        "synthesis and long-form analysis."
+                    )
+                },
+                "model": {
+                    "provider": "nvidia",
+                    "name": "z-ai/glm-5.2",
+                    "config": {
+                        "temperature": 0.3,
+                        "max_completion_tokens": 16384,
+                        "top_p": 0.95,
+                        "chat_template_kwargs": {"enable_thinking": True}
+                    }
+                }
             },
             "step-flash": {
                 "metadata": {
@@ -507,7 +900,7 @@ class AgentServerSettings(BaseSettings):
                         "``reasoning_effort`` enum. Reasoning tokens "
                         "stream live as step-by-step entries in the UI. "
                         "Default effort ``medium``."
-                    ),
+                    )
                 },
                 "model": {
                     "provider": "nvidia",
@@ -516,30 +909,54 @@ class AgentServerSettings(BaseSettings):
                         "temperature": 0.4,
                         "max_completion_tokens": 8192,
                         "top_p": 0.9,
-                        "extra_body": {"reasoning_effort": "medium"},
-                    },
-                },
+                        "extra_body": {"reasoning_effort": "medium"}
+                    }
+                }
             },
-            "minimax-m2": {
+            "step-3.7-flash": {
                 "metadata": {
-                    "name": "OpenBB · MiniMax M2.7",
+                    "name": "OpenBB · Step 3.7 Flash",
                     "description": (
-                        "MiniMax M2.7 on NVIDIA NIM — long-context "
-                        "generalist with strong instruction following. "
-                        "A third opinion alongside Nemotron and Mistral "
-                        "for multi-document synthesis."
-                    ),
+                        "StepFun Step-3.7-Flash on NVIDIA NIM — "
+                        "multimodal vision-language model with native "
+                        "tool use, 256K context, and image understanding. "
+                        "Use for vision + tool workflows, coding, and "
+                        "agentic tasks."
+                    )
                 },
                 "model": {
                     "provider": "nvidia",
-                    "name": "minimaxai/minimax-m2.7",
+                    "name": "stepfun-ai/step-3.7-flash",
                     "config": {
                         "temperature": 0.4,
                         "max_completion_tokens": 8192,
                         "top_p": 0.9,
+                        "extra_body": {"reasoning_effort": "medium"}
+                    }
+                },
+                "tool_sources": [
+                    "artifacts",
+                    "widget_data",
+                    "inspect_widget_data",
+                    "pdf_extract",
+                    "recall_user_memory",
+                    "translate",
+                    "web_search",
+                    "fetch_url",
+                    "vision_qa",
+                    "nemotron_ocr",
+                    "gemma_audio",
+                    "paligemma_vision",
+                ],
+                "tool_source_config": {
+                    "vision_qa": {
+                        "model": "stepfun-ai/step-3.7-flash",
                     },
                 },
-            },
+                "features": {
+                    "file-upload": True,
+                },
+            }
         }
     )
     default_profile: str = "default"
@@ -636,7 +1053,7 @@ class AgentServerSettings(BaseSettings):
                     "description": meta_overlay.get(
                         "description", self.metadata.description
                     ),
-                    "image_url": meta_overlay.get("image_url", self.metadata.image_url),
+                    "image_url": meta_overlay.get("image_url", self.metadata.image_url)
                 }
             )
         else:
@@ -683,7 +1100,7 @@ class AgentServerSettings(BaseSettings):
             "features": {**self.features, **dict(overlay.get("features", {}))},
             "system_prompt_file": _resolve_system_prompt_file(
                 overlay, self.system_prompt_file
-            ),
+            )
         }
         return AgentProfile(**profile_kwargs)
 
@@ -761,7 +1178,7 @@ class AgentServerSettings(BaseSettings):
         if "features" in agent_section and isinstance(agent_section["features"], dict):
             flat["features"] = {
                 **DEFAULT_FEATURES,
-                **agent_section["features"],
+                **agent_section["features"]
             }
 
         if "metadata" in agent_section and isinstance(agent_section["metadata"], dict):

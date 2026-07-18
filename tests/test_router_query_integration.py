@@ -27,6 +27,7 @@ def client(
     monkeypatch.setenv("OPENBB_AGENT_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("OPENBB_AGENT_MODEL_PROVIDER", "fake")
     monkeypatch.setenv("OPENBB_AGENT_MIDDLEWARE", "[]")
+    monkeypatch.setenv("OPENBB_AGENT_SUBAGENTS", "[]")
     monkeypatch.setenv(
         "OPENBB_AGENT_FAKE_RESPONSES",
         json.dumps(["Hello from the fake model."]),

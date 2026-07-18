@@ -28,7 +28,7 @@ The agent server is a FastAPI app that translates the [OpenBB Workspace custom-a
 
 ## Wire protocol
 
-The full request/response contract — every field, type, and artifact shape — is in [`reference/protocol/wire-contract.md`](../explanation/wire-contract.md). This section is the overview.
+The full request/response contract — every field, type, and artifact shape — is in [`explanation/wire-contract.md`](../explanation/wire-contract.md). This section is the overview.
 
 ### `GET /agents.json`
 
@@ -92,10 +92,10 @@ A client disconnect mid-stream triggers the FastAPI handler's `asyncio.Cancelled
 2. **Profile resolution.** The agent name (`/v1/query` → `default_profile`, `/agents/{name}/v1/query` → that name) is resolved to an `AgentProfile` — a frozen Pydantic model describing model + tools + middleware + sub-agents + features.
 3. **Widget ingestion.** When a tool message carries `get_widget_data` results, `parse_widget_data_messages` extracts them and `WidgetDataStore.record` persists each row set; the rows are queried later with SQL via `query_widget_data`.
 4. **Context ingestion.** `ingest_request_context` chunks any long uploaded file or human message (via `RecursiveCharacterTextSplitter`, language-aware for code) and writes the chunks to `MemoryStore` if the user has `memory:write` scope.
-5. **Build the agent.** `runtime/builder.py::run_agent` calls `langchain.deepagents.create_deep_agent(model, tools, system_prompt, subagents, middleware)`. Every plugin is resolved from `runtime/registry.py` against the entry-point groups documented in [`docs/README.md`](../index.md).
+5. **Build the agent.** `runtime/builder.py::run_agent` calls `deepagents.create_deep_agent(model, tools, system_prompt, subagents, middleware)`. Every plugin is resolved from `runtime/registry.py` against the entry-point groups documented in [`docs/index.md`](../index.md).
 6. **Stream.** `agent.astream(stream_mode=["updates","messages","custom"], subgraphs=True)` yields raw events. `protocol/adapter.py::DeepAgentEventAdapter` translates each into an OpenBB SSE event and the router writes it onto the wire.
 7. **Persist.** As frames stream, the `UsageRecorder` middleware accumulates token usage, the `ToolCallLedger` middleware writes every server-side tool call to `tool_calls`, and the router persists the final assistant text to `messages`.
-8. **Memory write-back.** Past-turn, the `MemoryWriter` middleware (when enabled + scope present) extracts durable facts from the assistant's reply and writes them to `memories`.
+8. **Memory writes.** In the default HTTP path, memory writes happen during request ingestion (`ingest_request_context`) when content exceeds thresholds and the caller has `memory:write`. A post-run extractor helper exists in `memory/writer.py` for custom integrations, but it is not part of the default middleware stack.
 
 ## Identity & trace ids
 

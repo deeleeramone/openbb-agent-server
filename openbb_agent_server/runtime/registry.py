@@ -73,6 +73,12 @@ def load(group: str, name: str, config: dict[str, Any] | None = None) -> Any:
     cls = ep.load()
     logger.debug("loaded plugin %s.%s -> %s", group, name, cls)
     cfg = dict(config or {})
+    # Callable instances (factories that are already objects) are used
+    # directly instead of being instantiated again. This is the common
+    # pattern for model-profile subagent factories, which are pre-bound
+    # objects that return the real spec when called.
+    if callable(cls) and not inspect.isclass(cls):
+        return cls(**cfg)
     accepted = _accepted_kwargs(cls)
     if accepted is not None:
         unknown = [k for k in cfg if k not in accepted]

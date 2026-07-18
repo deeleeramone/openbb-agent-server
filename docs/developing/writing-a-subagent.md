@@ -11,6 +11,7 @@ class SubAgentSpec(Protocol):
     system_prompt: str
     tools: tuple[str, ...]
     model: str | None
+    model_profile: str | None
 ```
 
 ## Minimal example
@@ -39,7 +40,7 @@ class PdfReaderSubAgent:
     model: str | None = None
 ```
 
-Note: `SubAgentSpec` is a `Protocol`, not a base class — duck-typing only. Inheriting from it adds nothing and is intentionally absent in the bundled subagents (`plugins/subagents/pdf_reader.py` ships exactly the shape above).
+Note: `SubAgentSpec` is a `Protocol`, not a base class — duck-typing only. Inheriting from it adds nothing and is intentionally absent in the bundled subagents. The shipped `plugins/subagents/pdf_reader.py` follows this same pattern, with `tools = ("pdf_extract",)` and a prompt that emits citations through the `custom` stream channel instead of a `cite_source` tool call. (`model_profile` is optional in practice — the builder checks for it with `hasattr` — so a spec that omits the attribute entirely, like `pdf_reader`, is still valid.)
 
 Register it:
 
@@ -83,6 +84,8 @@ The agent loop sees a new `task` tool that takes a sub-agent name and a free-for
 | `str` | provider name — re-resolves through the registry |
 | `BaseChatModel` instance | use this exact object |
 
+Alternatively, set `model_profile` to the name of a configured agent profile (`[agent.profiles.<name>]`): the builder resolves that profile's provider + model at build time and runs the sub-agent on it. This is how the bundled model-profile subagents (`deepseek-v4-flash`, `nemotron-3-super`, `qwen3.5`, …) delegate to specialist models; see `plugins/subagents/model_profile.py`.
+
 For a cheap sub-agent (e.g., a "summariser" running over already-fetched text), point at a smaller model:
 
 ```python
@@ -120,9 +123,9 @@ Spec-level unit tests are tiny:
 
 ```python
 def test_pdf_reader_spec_defaults() -> None:
-    spec = PdfReaderSpec()
+    spec = PdfReaderSubAgent()
     assert spec.name == "pdf_reader"
-    assert "extract_pdf" in spec.tools
+    assert "pdf_extract" in spec.tools
 ```
 
 End-to-end behavioural tests are harder because they require the agent to choose `task(name="pdf_reader", …)`. The pragmatic alternative: integration tests against the parent agent that assert the sub-agent gets invoked when the input warrants it (e.g., "summarise this 10-K" → expect `pdf_reader` invocation in `tool_calls`).

@@ -5,15 +5,15 @@ Every swappable piece of the runtime is a plugin discovered via Python entry poi
 | Group | ABC | Built-ins |
 | --- | --- | --- |
 | `openbb_agent_server.auth` | `AuthBackend` | `none`, `bearer_static`, `api_key_table`, `oidc_jwt`, `openbb_workspace` |
-| `openbb_agent_server.models` | `ModelProvider` | `anthropic`, `openai`, `openai_compat`, `bedrock`, `vertex`, `google_genai`, `groq`, `nvidia`, `fake` |
+| `openbb_agent_server.model_providers` | `ModelProvider` | `anthropic`, `openai`, `openai_compat`, `bedrock`, `vertex`, `google_genai`, `groq`, `nvidia`, `fake` |
 | `openbb_agent_server.tools` | `ToolSource` | every shipped tool source |
 | `openbb_agent_server.middleware` | `Middleware` | `call_limit`, `tool_call_limit`, `tool_call_announcer`, `tool_call_ledger`, `tool_filter`, `tool_message_normaliser`, `loop_guard`, `usage_recorder` |
-| `openbb_agent_server.subagents` | `SubAgentSpec` (Protocol) | `researcher`, `analyst`, `charter`, `pdf_reader` |
+| `openbb_agent_server.subagents` | `SubAgentSpec` (Protocol) | `researcher`, `analyst`, `charter`, `pdf_reader`, plus model-profile subagents (`deepseek-v4-flash`, `nemotron-3-super`, `qwen3.5`, `minimax-m3`, …) |
 | `openbb_agent_server.checkpointers` | `CheckpointerProvider` | `sqlite`, `postgres`, `inmemory` |
 
 ## Discovery
 
-`runtime/registry.py::load(group, name, config=None)` calls `importlib.metadata.entry_points(group=group)`, finds the matching entry, calls `entry.load()`, instantiates with no args, returns the instance. `config` is passed to `build(ctx, config)` for plugins that take per-call config.
+`runtime/registry.py::load(group, name, config=None)` calls `importlib.metadata.entry_points(group=group)`, finds the matching entry, calls `entry.load()`, and instantiates the class with `config` as constructor kwargs (unknown keys are dropped with a warning; callable non-class targets, like the model-profile subagent factories, are invoked directly). Per-run configuration reaches `build(ctx, config)` / `tools(ctx, config)` later, when the builder invokes the plugin during a run.
 
 No global plugin cache — entry points resolve fresh each call.
 
@@ -75,9 +75,10 @@ class SubAgentSpec(Protocol):
     system_prompt: str
     tools: tuple[str, ...]
     model: str | None
+    model_profile: str | None
 ```
 
-Any class with these attributes is a valid spec — no inheritance required. `tools` lists tool names inherited from the parent. See [Writing a sub-agent](writing-a-subagent.md).
+Any class with these attributes is a valid spec — no inheritance required. `tools` lists tool names inherited from the parent. `model_profile` names a configured agent profile to run the sub-agent on; the builder resolves it to that profile's model at build time (this is how the bundled model-profile subagents work). See [Writing a sub-agent](writing-a-subagent.md).
 
 ### `CheckpointerProvider`
 

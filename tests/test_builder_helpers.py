@@ -396,50 +396,9 @@ def test_tool_message_entry_chunks_falls_back_to_str_on_unserialisable() -> None
     assert isinstance(out[0], str)
 
 
-from openbb_agent_server.runtime.builder import _resolve_tools  # noqa: E402
-
-
-@pytest.mark.asyncio
-async def test_resolve_tools_recognises_workspace_mcp_prefix(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Flag tools with the workspace-MCP prefix as client-side."""
-    import types as _types
-
-    from openbb_agent_server.runtime import registry
-    from openbb_agent_server.runtime.plugins import ToolSource
-
-    class _Tool:
-        def __init__(self, name: str) -> None:
-            self.name = name
-
-    class _Source(ToolSource):
-        name = "workspace_mcp"
-
-        async def tools(self, ctx: RunContext, config: dict[str, Any]) -> list[Any]:
-            return [_Tool("mcp:open_widget")]
-
-    real_load = registry.load
-    monkeypatch.setattr(
-        registry,
-        "load",
-        lambda group, name, *a, **kw: (
-            _Source()
-            if group == "openbb_agent_server.tools"
-            else real_load(group, name, *a, **kw)
-        ),
-    )
-    profile = _types.SimpleNamespace(
-        tool_sources=("workspace_mcp",),
-        tool_source_config={},
-    )
-    tools, client = await _resolve_tools(_ctx(), profile)
-    assert "mcp:open_widget" in client
-    assert len(tools) == 1
-
-
 from openbb_agent_server.runtime.builder import (  # noqa: E402
     _load_system_prompt,
+    _resolve_tools,
 )
 
 

@@ -4,16 +4,17 @@ The agent server is a Python package that ships its own CLI. Out of the box it s
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.11+
 - An NVIDIA API key if you want production-quality embeddings, reranking, and multimodal tools (vision / audio). Without one, the server falls back to deterministic hash embeddings and the NIM-backed tools quietly skip registration.
 - A model-provider key for whichever chat model you choose (Anthropic / OpenAI / Bedrock / Vertex / Groq). The default profile uses NVIDIA `nemotron-3-super-120b-a12b`.
 
 ## Install
 
-From the monorepo:
+From this repository root:
 
 ```sh
-cd openbb_platform/extensions/agent_server
+git clone https://github.com/deeleeramone/openbb-agent-server
+cd openbb-agent-server
 pip install -e .
 ```
 
@@ -49,20 +50,20 @@ openbb-agent-server
 The server logs:
 
 ```json
-{"level":"INFO","logger":"openbb_agent_server.main","message":"agent server listening on 127.0.0.1:8010"}
+{"level":"INFO","logger":"openbb_agent_server.main","message":"agent server listening on 127.0.0.1:6900"}
 ```
 
 Verify it responds:
 
 ```sh
-curl http://127.0.0.1:8010/agents.json
+curl http://127.0.0.1:6900/agents.json
 ```
 
 You should see a JSON map of profile metadata. See [Architecture → Wire protocol](architecture.md#wire-protocol) for the shape.
 
 ## Add the agent to OpenBB Workspace
 
-Open Workspace → AI Agents → Add Agent → paste `http://127.0.0.1:8010` → save. Detailed walk-through: [Workspace integration](workspace-integration.md).
+Open Workspace → AI Agents → Add Agent → paste `http://127.0.0.1:6900` → save. Detailed walk-through: [Workspace integration](workspace-integration.md).
 
 ## First conversation
 

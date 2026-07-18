@@ -55,7 +55,7 @@ See [auth.md](auth.md) for per-backend config keys.
 | --- | --- |
 | `model.provider` | `nvidia` |
 | `model.name` | `nvidia/nemotron-3-super-120b-a12b` |
-| `model.config` | `{temperature=0.4, max_completion_tokens=8192, top_p=0.95}` |
+| `model.config` | `{temperature=0.3, max_completion_tokens=8192, top_p=0.95, chat_template_kwargs={enable_thinking=true}}` |
 
 Other providers: `anthropic`, `openai`, `openai_compat`, `bedrock`, `vertex`, `google_genai`, `groq`, `fake`. Each is an optional install extra; see [plugin-system.md](../developing/plugin-system.md#modelprovider).
 
@@ -63,11 +63,11 @@ Other providers: `anthropic`, `openai`, `openai_compat`, `bedrock`, `vertex`, `g
 
 | Key | Default |
 | --- | --- |
-| `tool_sources` | `["artifacts", "web_search", "fetch_url", "widget_data", "inspect_widget_data", "pdf_extract", "dashboard", "recall_user_memory", "translate", "rerank", "vision_qa", "workspace_mcp"]` |
+| `tool_sources` | `["artifacts", "web_search", "fetch_url", "widget_data", "inspect_widget_data", "pdf_extract", "dashboard", "recall_user_memory", "translate", "rerank", "vision_qa", "nemotron_ocr"]` |
 | `tool_source_config` | `{}` (per-name kwargs dict) |
-| `subagents` | `["researcher", "charter", "analyst", "pdf_reader"]` |
+| `subagents` | includes `researcher`, `charter`, `analyst`, `pdf_reader`, plus model-profile subagents (for example `deepseek-v4-flash`, `nemotron-3-super`, `qwen3.5`, `minimax-m3`) |
 | `middleware` | `["tool_message_normaliser", "tool_filter", "tool_call_announcer", "usage_recorder", "tool_call_ledger", "loop_guard", "call_limit", "tool_call_limit"]` |
-| `skills` | `[]` (filesystem paths for DeepAgents `SkillsMiddleware`) |
+| `skills` | `[<repo>/openbb_agent_server/skills]` (filesystem paths for DeepAgents `SkillsMiddleware`) |
 | `system_prompt_file` | unset → bundled `prompts/default_system_prompt.md` |
 
 ## Memory pipeline
@@ -85,7 +85,7 @@ Other providers: `anthropic`, `openai`, `openai_compat`, `bedrock`, `vertex`, `g
 | `reranker_config` | `{}` |
 | `rerank_fanout` | `32` |
 | `translation_provider` | `nvidia` (empty string disables) |
-| `translation_model` | `nvidia/riva-translate-4b-instruct-v1_1` |
+| `translation_model` | `nvidia/riva-translate-4b-instruct` |
 | `translation_config` | `{}` |
 | `translate_for_ingestion` | `true` |
 | `ingest_target_language` | `English` |
@@ -103,7 +103,7 @@ streaming = true
 widget-dashboard-select = true
 widget-dashboard-search = true
 widget-global-search = true
-mcp-tools = true
+
 file-upload = true
 generative-ui = true
 
@@ -118,7 +118,7 @@ description = "Allow the agent to fetch and read the full text of a web page fro
 default = false
 ```
 
-Reserved boolean keys: `streaming`, `widget-dashboard-select`, `widget-dashboard-search`, `widget-global-search`, `mcp-tools`, `file-upload`, `generative-ui`. Custom feature names beginning with `web search`, `web-search`, or `websearch` are rejected — use `search-web` (kebab-case).
+Reserved boolean keys: `streaming`, `widget-dashboard-select`, `widget-dashboard-search`, `widget-global-search`, `file-upload`, `generative-ui`. The custom feature names `web search`, `web-search`, and `websearch` are reserved and rejected — use `search-web` (kebab-case).
 
 ## Metadata
 

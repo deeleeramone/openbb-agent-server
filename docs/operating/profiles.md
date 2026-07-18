@@ -58,6 +58,7 @@ description = "Smaller model, web search only."
 provider = "anthropic"
 name = "claude-haiku-4-5-20251001"
 
+[agent.profiles.fast]
 tool_sources = ["web_search", "rerank"]
 ```
 
@@ -84,7 +85,6 @@ Templating: prompts can include `{timezone}`, `{today}`, `{widget_snapshot}`, `{
 | `widget-dashboard-select` | Workspace passes pinned widgets in `widgets.primary` |
 | `widget-dashboard-search` | Workspace lets the agent search across all dashboard widgets |
 | `widget-global-search` | Workspace exposes global search across the user's widget catalogue |
-| `mcp-tools` | Workspace forwards the user's MCP tools in `tools[]` |
 | `file-upload` | Workspace allows file uploads on the request |
 | `generative-ui` | Workspace renders client-side generative UI from the agent's output |
 

@@ -10,7 +10,7 @@
 
 [agent]
 host = "127.0.0.1"
-port = 8010
+port = 6900
 auth_backend = "openbb_workspace"
 checkpointer_provider = "sqlite"
 
@@ -27,11 +27,32 @@ tool_sources = [
     "translate",
     "rerank",
     "vision_qa",
+    "nemotron_ocr",
     "gemma_audio",
-    "workspace_mcp",
 ]
 
-subagents = ["researcher", "charter", "analyst", "pdf_reader"]
+subagents = [
+    "researcher",
+    "charter",
+    "analyst",
+    "pdf_reader",
+    "deepseek-v4-flash",
+    "deepseek-v4-pro",
+    "nemotron-3-super",
+    "nemotron-ultra",
+    "nemotron-3-nano",
+    "mistral-small-4",
+    "llama-4-maverick",
+    "gemma-4",
+    "gpt-oss-120b",
+    "glm-5.1",
+    "qwen3.5",
+    "minimax-m3",
+]
+
+skills = [
+    "openbb_agent_server/skills",
+]
 
 middleware = [
     "tool_message_normaliser",
@@ -96,7 +117,6 @@ streaming               = true
 widget-dashboard-select = true
 widget-dashboard-search = true
 widget-global-search    = true
-mcp-tools               = true
 file-upload             = false
 generative-ui           = true
 
@@ -142,7 +162,7 @@ model = "mistralai/mistral-large-3-675b-instruct-2512"
 streaming               = true
 widget-dashboard-select = true
 widget-dashboard-search = true
-mcp-tools               = true
+
 
 [agent.profiles.mistral-large-3.features.search-web]
 label       = "Search Web"
@@ -174,6 +194,7 @@ max_completion_tokens = 8192
 top_p                 = 0.9
 extra_body = { reasoning_effort = "low" }
 
+[agent.profiles.transcribe]
 tool_sources = ["artifacts", "pdf_extract", "gemma_audio", "paligemma_vision", "inspect_widget_data"]
 subagents    = []
 
@@ -181,23 +202,24 @@ subagents    = []
 streaming               = true
 widget-dashboard-select = true
 widget-dashboard-search = true
-mcp-tools               = false
 
 
 # ── qwen3-coder ──────────────────────────────────────────────────────────────
-[agent.profiles.qwen3-coder.metadata]
-name = "OpenBB · Qwen3 Coder (480B)"
-description = "Code-generation specialist on qwen/qwen3-coder-480b-a35b-instruct."
+[agent.profiles."qwen3.5".metadata]
+name = "OpenBB · Qwen3.5 (122B)"
+description = "Code and reasoning specialist on qwen/qwen3.5-122b-a10b."
 
-[agent.profiles.qwen3-coder.model]
+[agent.profiles."qwen3.5".model]
 provider = "nvidia"
-name     = "qwen/qwen3-coder-480b-a35b-instruct"
+name     = "qwen/qwen3.5-122b-a10b"
 
-[agent.profiles.qwen3-coder.model.config]
+[agent.profiles."qwen3.5".model.config]
 temperature           = 0.2
 max_completion_tokens = 16384
 top_p                 = 0.95
+chat_template_kwargs = { enable_thinking = true }
 
+[agent.profiles."qwen3.5"]
 tool_sources = [
     "artifacts",
     "widget_data",
@@ -205,22 +227,20 @@ tool_sources = [
     "pdf_extract",
     "recall_user_memory",
     "web_search",
-    "workspace_mcp",
 ]
 subagents = ["analyst"]
 
-[agent.profiles.qwen3-coder.features]
+[agent.profiles."qwen3.5".features]
 streaming               = true
 widget-dashboard-select = true
 widget-dashboard-search = true
-mcp-tools               = true
 
-[agent.profiles.qwen3-coder.features.search-web]
+[agent.profiles."qwen3.5".features.search-web]
 label       = "Search Web"
 description = "Allow the coder to search the public web."
 default     = false
 
-[agent.profiles.qwen3-coder.features.fetch-url]
+[agent.profiles."qwen3.5".features.fetch-url]
 label       = "Fetch URL"
 description = "Allow the agent to fetch and read the full text of a web page from a URL."
 default     = false
@@ -244,7 +264,6 @@ extra_body = { thinking_budget = 1024 }
 streaming               = true
 widget-dashboard-select = true
 widget-dashboard-search = true
-mcp-tools               = true
 
 [agent.profiles.seed-oss.features.search-web]
 label       = "Search Web"
@@ -275,7 +294,6 @@ extra_body = { reasoning_effort = "medium" }
 streaming               = true
 widget-dashboard-select = true
 widget-dashboard-search = true
-mcp-tools               = true
 
 [agent.profiles.step-flash.features.search-web]
 label       = "Search Web"
@@ -288,31 +306,431 @@ description = "Allow the agent to fetch and read the full text of a web page fro
 default     = false
 
 
-[agent.profiles.minimax-m2.metadata]
-name = "OpenBB · MiniMax M2.7"
-description = "MiniMax M2.7 long-context generalist."
+# ── minimax-m3 ───────────────────────────────────────────────────────────────
+[agent.profiles.minimax-m3.metadata]
+name = "OpenBB · MiniMax M3"
+description = "Multimodal MoE vision-language model with tool use and 1M context."
 
-[agent.profiles.minimax-m2.model]
+[agent.profiles.minimax-m3.model]
 provider = "nvidia"
-name     = "minimaxai/minimax-m2.7"
+name     = "minimaxai/minimax-m3"
 
-[agent.profiles.minimax-m2.model.config]
-temperature           = 0.4
+[agent.profiles.minimax-m3.model.config]
+temperature           = 0.3
 max_completion_tokens = 8192
 top_p                 = 0.9
 
-[agent.profiles.minimax-m2.features]
+[agent.profiles.minimax-m3.tool_source_config]
+vision_qa = { model = "minimaxai/minimax-m3" }
+
+[agent.profiles.minimax-m3.features]
 streaming               = true
 widget-dashboard-select = true
 widget-dashboard-search = true
-mcp-tools               = true
+file-upload             = true
 
-[agent.profiles.minimax-m2.features.search-web]
+[agent.profiles.minimax-m3.features.search-web]
 label       = "Search Web"
 description = "Allow the agent to search the public web."
 default     = false
 
-[agent.profiles.minimax-m2.features.fetch-url]
+[agent.profiles.minimax-m3.features.fetch-url]
 label       = "Fetch URL"
 description = "Allow the agent to fetch and read the full text of a web page from a URL."
 default     = false
+
+
+# ── nemotron-3-ultra ─────────────────────────────────────────────────────────
+[agent.profiles.nemotron-3-ultra.metadata]
+name = "OpenBB · Nemotron-3 Ultra (550B)"
+description = "NVIDIA Nemotron-3 Ultra 550B reasoning model with 1M-token context and tool use."
+
+[agent.profiles.nemotron-3-ultra.model]
+provider = "nvidia"
+name     = "nvidia/nemotron-3-ultra-550b-a55b"
+
+[agent.profiles.nemotron-3-ultra.model.config]
+temperature           = 0.3
+max_completion_tokens = 32768
+top_p                 = 0.95
+chat_template_kwargs = { enable_thinking = true }
+
+[agent.profiles.nemotron-3-ultra.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+
+[agent.profiles.nemotron-3-ultra.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles.nemotron-3-ultra.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+
+# ── step-3.7-flash ───────────────────────────────────────────────────────────
+[agent.profiles."step-3.7-flash".metadata]
+name = "OpenBB · Step 3.7 Flash"
+description = "StepFun Step-3.7-Flash multimodal vision-language model with tool use and 256K context."
+
+[agent.profiles."step-3.7-flash".model]
+provider = "nvidia"
+name     = "stepfun-ai/step-3.7-flash"
+
+[agent.profiles."step-3.7-flash".model.config]
+temperature           = 0.4
+max_completion_tokens = 8192
+top_p                 = 0.9
+extra_body = { reasoning_effort = "medium" }
+
+[agent.profiles."step-3.7-flash"]
+tool_sources = ["artifacts", "widget_data", "inspect_widget_data", "pdf_extract", "recall_user_memory", "translate", "web_search", "fetch_url", "vision_qa", "nemotron_ocr", "gemma_audio", "paligemma_vision"]
+
+[agent.profiles."step-3.7-flash".tool_source_config]
+vision_qa = { model = "stepfun-ai/step-3.7-flash" }
+
+[agent.profiles."step-3.7-flash".features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+file-upload             = true
+
+[agent.profiles."step-3.7-flash".features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles."step-3.7-flash".features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+# ── deepseek-v4-flash ────────────────────────────────────────────────────────
+[agent.profiles.deepseek-v4-flash.metadata]
+name = "OpenBB · DeepSeek-V4 Flash"
+description = "Fast, high-capacity reasoning model for OpenBB workflows on NVIDIA NIM."
+
+[agent.profiles.deepseek-v4-flash.model]
+provider = "nvidia"
+name     = "deepseek-ai/deepseek-v4-flash"
+
+[agent.profiles.deepseek-v4-flash.model.config]
+temperature           = 0.4
+max_completion_tokens = 16384
+top_p                 = 0.95
+chat_template_kwargs = { thinking = true, reasoning_effort = "high" }
+
+[agent.profiles.deepseek-v4-flash.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+
+[agent.profiles.deepseek-v4-flash.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles.deepseek-v4-flash.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+
+# ── deepseek-v4-pro ──────────────────────────────────────────────────────────
+[agent.profiles.deepseek-v4-pro.metadata]
+name = "OpenBB · DeepSeek-V4 Pro"
+description = "Largest DeepSeek reasoning model on NVIDIA NIM for deep research and synthesis."
+
+[agent.profiles.deepseek-v4-pro.model]
+provider = "nvidia"
+name     = "deepseek-ai/deepseek-v4-pro"
+
+[agent.profiles.deepseek-v4-pro.model.config]
+temperature           = 0.3
+max_completion_tokens = 32768
+top_p                 = 0.95
+chat_template_kwargs = { thinking = true, reasoning_effort = "high" }
+
+[agent.profiles.deepseek-v4-pro.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+
+[agent.profiles.deepseek-v4-pro.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles.deepseek-v4-pro.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+
+# ── nemotron-3-super ─────────────────────────────────────────────────────────
+[agent.profiles.nemotron-3-super.metadata]
+name = "OpenBB · Nemotron-3 Super (120B)"
+description = "NVIDIA Nemotron-3 Super 120B MoE on NIM — general-purpose reasoning with 1M context."
+
+[agent.profiles.nemotron-3-super.model]
+provider = "nvidia"
+name     = "nvidia/nemotron-3-super-120b-a12b"
+
+[agent.profiles.nemotron-3-super.model.config]
+temperature           = 0.3
+max_completion_tokens = 16384
+top_p                 = 0.95
+chat_template_kwargs = { enable_thinking = true }
+
+[agent.profiles.nemotron-3-super.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+
+[agent.profiles.nemotron-3-super.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles.nemotron-3-super.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+
+# ── nemotron-ultra ───────────────────────────────────────────────────────────
+[agent.profiles.nemotron-ultra.metadata]
+name = "OpenBB · Nemotron Ultra (49B)"
+description = "NVIDIA Llama-3.3 Nemotron Super 49B v1.5 on NIM — current-generation reasoning model."
+
+[agent.profiles.nemotron-ultra.model]
+provider = "nvidia"
+name     = "nvidia/llama-3.3-nemotron-super-49b-v1.5"
+
+[agent.profiles.nemotron-ultra.model.config]
+temperature           = 0.3
+max_completion_tokens = 16384
+top_p                 = 0.95
+
+[agent.profiles.nemotron-ultra.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+
+[agent.profiles.nemotron-ultra.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles.nemotron-ultra.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+
+# ── nemotron-3-nano ──────────────────────────────────────────────────────────
+[agent.profiles.nemotron-3-nano.metadata]
+name = "OpenBB · Nemotron-3 Nano (30B)"
+description = "Fast, efficient text-only reasoning model on NVIDIA NIM for low-latency tasks."
+
+[agent.profiles.nemotron-3-nano.model]
+provider = "nvidia"
+name     = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+
+[agent.profiles.nemotron-3-nano.model.config]
+temperature           = 0.3
+max_completion_tokens = 4096
+top_p                 = 0.95
+chat_template_kwargs = { enable_thinking = true }
+
+[agent.profiles.nemotron-3-nano.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+
+[agent.profiles.nemotron-3-nano.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles.nemotron-3-nano.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+
+# ── mistral-small-4 ──────────────────────────────────────────────────────────
+[agent.profiles.mistral-small-4.metadata]
+name = "OpenBB · Mistral Small 4 (119B)"
+description = "Mistral Small 4 on NVIDIA NIM — multimodal text/image reasoning with reasoning_effort."
+
+[agent.profiles.mistral-small-4.model]
+provider = "nvidia"
+name     = "mistralai/mistral-small-4-119b-2603"
+
+[agent.profiles.mistral-small-4.model.config]
+temperature           = 0.3
+max_completion_tokens = 16384
+top_p                 = 0.9
+reasoning_effort      = "high"
+
+[agent.profiles.mistral-small-4]
+tool_sources = ["artifacts", "widget_data", "inspect_widget_data", "pdf_extract", "recall_user_memory", "translate", "web_search", "fetch_url", "vision_qa", "nemotron_ocr", "gemma_audio", "paligemma_vision"]
+
+[agent.profiles.mistral-small-4.tool_source_config]
+vision_qa = { model = "mistralai/mistral-small-4-119b-2603" }
+
+[agent.profiles.mistral-small-4.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+file-upload             = true
+
+[agent.profiles.mistral-small-4.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles.mistral-small-4.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+
+# ── llama-4-maverick ─────────────────────────────────────────────────────────
+[agent.profiles.llama-4-maverick.metadata]
+name = "OpenBB · Llama 4 Maverick"
+description = "Meta Llama 4 Maverick 400B MoE on NVIDIA NIM — multimodal text/image generalist."
+
+[agent.profiles.llama-4-maverick.model]
+provider = "nvidia"
+name     = "meta/llama-4-maverick-17b-128e-instruct"
+
+[agent.profiles.llama-4-maverick.model.config]
+temperature           = 0.3
+max_completion_tokens = 16384
+top_p                 = 0.9
+
+[agent.profiles.llama-4-maverick]
+tool_sources = ["artifacts", "widget_data", "inspect_widget_data", "pdf_extract", "recall_user_memory", "translate", "web_search", "fetch_url", "vision_qa", "nemotron_ocr", "gemma_audio", "paligemma_vision"]
+
+[agent.profiles.llama-4-maverick.tool_source_config]
+vision_qa = { model = "meta/llama-4-maverick-17b-128e-instruct" }
+
+[agent.profiles.llama-4-maverick.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+file-upload             = true
+
+[agent.profiles.llama-4-maverick.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles.llama-4-maverick.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+
+# ── gemma-4 ──────────────────────────────────────────────────────────────────
+[agent.profiles.gemma-4.metadata]
+name = "OpenBB · Gemma 4 (31B)"
+description = "Google Gemma 4 31B on NVIDIA NIM — dense multimodal text/image/video model."
+
+[agent.profiles.gemma-4.model]
+provider = "nvidia"
+name     = "google/gemma-4-31b-it"
+
+[agent.profiles.gemma-4.model.config]
+temperature           = 0.3
+max_completion_tokens = 8192
+top_p                 = 0.95
+chat_template_kwargs = { enable_thinking = true }
+
+[agent.profiles.gemma-4]
+tool_sources = ["artifacts", "widget_data", "inspect_widget_data", "pdf_extract", "recall_user_memory", "translate", "web_search", "fetch_url", "vision_qa", "nemotron_ocr", "gemma_audio", "paligemma_vision"]
+
+[agent.profiles.gemma-4.tool_source_config]
+vision_qa = { model = "google/gemma-4-31b-it" }
+
+[agent.profiles.gemma-4.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+file-upload             = true
+
+[agent.profiles.gemma-4.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles.gemma-4.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+
+# ── gpt-oss-120b ─────────────────────────────────────────────────────────────
+[agent.profiles.gpt-oss-120b.metadata]
+name = "OpenBB · GPT-OSS 120B"
+description = "OpenAI GPT-OSS 120B on NVIDIA NIM — open weight model with strong tool use."
+
+[agent.profiles.gpt-oss-120b.model]
+provider = "nvidia"
+name     = "openai/gpt-oss-120b"
+
+[agent.profiles.gpt-oss-120b.model.config]
+temperature           = 0.3
+max_completion_tokens = 8192
+top_p                 = 0.95
+
+[agent.profiles.gpt-oss-120b.features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+
+[agent.profiles.gpt-oss-120b.features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles.gpt-oss-120b.features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+
+
+# ── glm-5.1 ──────────────────────────────────────────────────────────────────
+[agent.profiles."glm-5.1".metadata]
+name = "OpenBB · GLM 5.1"
+description = "Zhipu GLM 5.1 on NVIDIA NIM — long-context MoE text model with thinking support."
+
+[agent.profiles."glm-5.1".model]
+provider = "nvidia"
+name     = "z-ai/glm-5.2"
+
+[agent.profiles."glm-5.1".model.config]
+temperature           = 0.3
+max_completion_tokens = 16384
+top_p                 = 0.95
+chat_template_kwargs = { enable_thinking = true }
+
+[agent.profiles."glm-5.1".features]
+streaming               = true
+widget-dashboard-select = true
+widget-dashboard-search = true
+
+[agent.profiles."glm-5.1".features.search-web]
+label       = "Search Web"
+description = "Allow the agent to search the public web."
+default     = false
+
+[agent.profiles."glm-5.1".features.fetch-url]
+label       = "Fetch URL"
+description = "Allow the agent to fetch and read the full text of a web page from a URL."
+default     = false
+

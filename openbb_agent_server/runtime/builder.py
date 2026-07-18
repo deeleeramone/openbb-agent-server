@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import datetime as _dt
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 from typing import Any
 
@@ -90,8 +90,13 @@ B) Virtual filesystem — internal scratch space, NOT a real disk.
 
 C) Sub-agent delegation:
    - ``task(subagent_name, instruction)`` — delegate to a named
-     specialist (researcher, analyst, charter, pdf_reader). Use
-     when one specialised step is part of a larger task.
+     specialist (researcher, analyst, charter, pdf_reader,
+     deepseek-v4-flash, deepseek-v4-pro, nemotron-3-super,
+     nemotron-ultra, nemotron-3-ultra, nemotron-3-nano,
+     mistral-small-4, llama-4-maverick, gemma-4, gpt-oss-120b,
+     glm-5.1, qwen3.5, minimax-m3, step-3.7-flash). Use when one
+     specialised step is part of a larger
+     task; each specialist runs its own model and tool set.
 
 D) OpenBB Workspace artifacts — these are how the user actually
    sees rich content:
@@ -173,7 +178,12 @@ For data tasks:
 For multi-step research:
 1. ``write_todos`` to outline.
 2. Execute steps; ``emit_reasoning_step`` for visible status.
-3. ``task('researcher', ...)`` to delegate sub-questions.
+3. ``task('researcher', ...)`` to delegate sub-questions, or
+   ``task('<model-profile>', ...)`` to hand work to a specialist
+   model (deepseek-v4-pro for deep reasoning, mistral-small-4,
+   llama-4-maverick, gemma-4, or step-3.7-flash for multimodal/video,
+   nemotron-ultra or nemotron-3-ultra for long-context analysis,
+   qwen3.5 for coding/SQL).
 4. Synthesise + emit a final artifact + cite.
 
 ═══════════════════════════════════════════════════════════════════
@@ -608,15 +618,69 @@ def _to_lc_messages(messages: list[ChatMessage]) -> list[Any]:
     return out
 
 
+_MODEL_PARAMETER_FEATURES: dict[str, tuple[str, Callable[[str], Any] | type]] = {
+    "temperature": ("temperature", float),
+    "top-p": ("top_p", float),
+    "max-tokens": ("max_tokens", int),
+    "reasoning-effort": ("reasoning_effort", str),
+    "reasoning-budget": ("reasoning_budget", int),
+    "seed": ("seed", int),
+}
+
+
+def _coerce_model_param(
+    raw: Any,
+    coerce: Callable[[str], Any] | type,
+) -> Any:
+    """Coerce a workspace option value into a model config value."""
+    if raw is None:
+        return None
+    if isinstance(raw, bool):
+        return raw
+    try:
+        return coerce(str(raw))
+    except (ValueError, TypeError) as exc:
+        raise ValueError(f"cannot coerce {raw!r} to {coerce.__name__}: {exc}") from exc
+
+
+def _model_config_with_overrides(
+    base: dict[str, Any],
+    workspace_options: dict[str, Any],
+) -> dict[str, Any]:
+    """Merge per-run parameter overrides from workspace options.
+
+    Recognised feature IDs (``temperature``, ``top-p``, ``max-tokens``,
+    ``reasoning-effort``, ``reasoning-budget``, ``seed``) are coerced and
+    applied on top of the profile's base model configuration. Unknown
+    options are ignored.
+    """
+    out = dict(base)
+    overrides: dict[str, Any] = {}
+    for feature_id, (key, coerce) in _MODEL_PARAMETER_FEATURES.items():
+        raw = workspace_options.get(feature_id)
+        if raw is None:
+            continue
+        try:
+            coerced = _coerce_model_param(raw, coerce)
+        except ValueError as exc:
+            logger.warning(
+                "ignoring invalid model parameter %s: %s", feature_id, exc
+            )
+            continue
+        if coerced is None or coerced == "":
+            continue
+        overrides[key] = coerced
+    if overrides:
+        out.update(overrides)
+    return out
+
+
 async def _resolve_tools(
     ctx: RunContext,
     profile: AgentProfile,
 ) -> tuple[list[Any], frozenset[str]]:
     """Return ``(tools, client_tool_names)`` for the run."""
-    from openbb_agent_server.protocol.adapter import (
-        CLIENT_SIDE_TOOL_PREFIX,
-        WORKSPACE_MCP_TOOL_PREFIX,
-    )
+    from openbb_agent_server.protocol.adapter import CLIENT_SIDE_TOOL_PREFIX
 
     tools: list[Any] = []
     client_tools: set[str] = set()
@@ -628,9 +692,7 @@ async def _resolve_tools(
         for t in await source.tools(ctx, source_cfg):
             tools.append(t)
             tool_name = getattr(t, "name", "")
-            if tool_name.startswith(CLIENT_SIDE_TOOL_PREFIX) or tool_name.startswith(
-                WORKSPACE_MCP_TOOL_PREFIX
-            ):
+            if tool_name.startswith(CLIENT_SIDE_TOOL_PREFIX):
                 client_tools.add(tool_name)
     return tools, frozenset(client_tools)
 
@@ -638,6 +700,8 @@ async def _resolve_tools(
 def _resolve_subagents(
     profile: AgentProfile,
     main_tools: list[Any],
+    ctx: RunContext | None = None,
+    settings: AgentServerSettings | None = None,
 ) -> list[dict[str, Any]]:
     """Resolve subagent specs against the chosen profile."""
     by_name = {getattr(t, "name", ""): t for t in main_tools}
@@ -654,8 +718,44 @@ def _resolve_subagents(
             resolved = [by_name[n] for n in wanted if n in by_name]
             if resolved:
                 entry["tools"] = resolved
-        if spec.model:
+        if spec.model and not isinstance(spec.model, str):
+            # Already a BaseChatModel instance; use it directly.
             entry["model"] = spec.model
+        elif spec.model:
+            # Static class-level model override (string model name).
+            entry["model"] = spec.model
+        elif hasattr(spec, "model_profile") and spec.model_profile:
+            # New-style subagent: delegate to another configured profile.
+            # Resolve the profile and build its model through the
+            # configured provider so provider-specific handling
+            # (e.g. ChatNVIDIA for all NVIDIA NIM models) is preserved.
+            try:
+                from openbb_agent_server.app.settings import AgentServerSettings
+
+                settings_for_sub = settings or AgentServerSettings()
+                sub_profile = settings_for_sub.resolve_profile(spec.model_profile)
+                if ctx is not None:
+                    model_cfg = _model_config_with_overrides(
+                        sub_profile.model_config_, ctx.workspace_options
+                    )
+                    sub_model_provider: ModelProvider = registry.load(
+                        "openbb_agent_server.model_providers",
+                        sub_profile.model_provider,
+                        {"model_name": sub_profile.model_name, **model_cfg},
+                    )
+                    entry["model"] = sub_model_provider.build(ctx, {})
+                else:
+                    # Test fallback: pass the model name string and let
+                    # deepagents resolve it later.
+                    entry["model"] = sub_profile.model_name
+            except Exception:  # noqa: BLE001 — a bad profile name should not kill the run
+                logger.warning(
+                    "subagent profile %r could not be resolved; falling back "
+                    "to default model",
+                    spec.model_profile,
+                    exc_info=True,
+                )
+                entry["model"] = getattr(spec, "model_profile", None)
         out.append(entry)
     return out
 
@@ -725,10 +825,13 @@ async def run_agent(
 
     from deepagents import create_deep_agent
 
+    model_cfg = _model_config_with_overrides(
+        profile.model_config_, ctx.workspace_options
+    )
     model_provider: ModelProvider = registry.load(
-        "openbb_agent_server.models",
+        "openbb_agent_server.model_providers",
         profile.model_provider,
-        {"model_name": profile.model_name, **profile.model_config_},
+        {"model_name": profile.model_name, **model_cfg},
     )
     model = model_provider.build(ctx, {})
 
@@ -808,7 +911,7 @@ async def run_agent(
             removed,
         )
 
-    subagents = _resolve_subagents(profile, tools)
+    subagents = _resolve_subagents(profile, tools, ctx=ctx, settings=settings)
     middleware = _resolve_middleware(ctx, profile, model)
 
     from langchain_core.runnables import RunnableConfig

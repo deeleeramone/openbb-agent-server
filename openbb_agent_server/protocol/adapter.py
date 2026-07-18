@@ -137,8 +137,6 @@ class _ThinkingStreamSplitter:
 
 CLIENT_SIDE_TOOL_PREFIX = "client:"
 
-WORKSPACE_MCP_TOOL_PREFIX = "mcp:"
-
 
 _WORKSPACE_NATIVE_FUNCTIONS: frozenset[str] = frozenset(
     {
@@ -662,14 +660,7 @@ class DeepAgentEventAdapter:
             and raw_name not in self._client_tool_names
         ):
             return None
-        if raw_name.startswith(WORKSPACE_MCP_TOOL_PREFIX):
-            rest = raw_name[len(WORKSPACE_MCP_TOOL_PREFIX) :]
-            if ":" in rest:
-                server_id, _, function = rest.partition(":")
-            else:
-                server_id = ns[0] if ns else "agent"
-                function = rest
-        elif raw_name.startswith(CLIENT_SIDE_TOOL_PREFIX):
+        if raw_name.startswith(CLIENT_SIDE_TOOL_PREFIX):
             server_id = ns[0] if ns else "agent"
             function = raw_name[len(CLIENT_SIDE_TOOL_PREFIX) :]
         elif raw_name in self._client_tool_names:

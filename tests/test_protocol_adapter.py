@@ -252,37 +252,6 @@ async def test_prose_during_tool_call_routes_to_reasoning() -> None:
 
 
 @pytest.mark.asyncio
-async def test_workspace_mcp_tool_carries_server_id_through_arguments() -> None:
-    """An mcp tool name round-trips server id and function name."""
-    raw = [
-        {
-            "type": "messages",
-            "ns": ["graph"],
-            "data": {
-                "message": {
-                    "content": "",
-                    "tool_calls": [
-                        {
-                            "name": "mcp:wkspc:get_quote",
-                            "args": {"ticker": "AAPL"},
-                            "id": "c-9",
-                        }
-                    ],
-                }
-            },
-        }
-    ]
-    out = await _drive(DeepAgentEventAdapter(), raw)
-    assert isinstance(out[0], FunctionCallSSE)
-    assert out[0].data.function == "execute_agent_tool"
-    assert out[0].data.input_arguments == {
-        "server_id": "wkspc",
-        "name": "get_quote",
-        "arguments": {"ticker": "AAPL"},
-    }
-
-
-@pytest.mark.asyncio
 async def test_messages_event_extracts_text_from_block_list_content() -> None:
     """The adapter surfaces only text blocks from block-list content."""
     out = await _drive(
@@ -1553,30 +1522,6 @@ async def test_custom_step_flushes_splitter_and_reasoning() -> None:
     msgs = [e.data.message for e in out if isinstance(e, StatusUpdateSSE)]
     assert "thinking out loud" in " ".join(msgs)
     assert "a step" in msgs
-
-
-@pytest.mark.asyncio
-async def test_mcp_tool_without_inner_colon_uses_namespace_server_id() -> None:
-    """An mcp name with no inner colon takes the server id from ns."""
-    raw = [
-        {
-            "type": "messages",
-            "ns": ["nspace"],
-            "data": {
-                "message": {
-                    "content": "",
-                    "tool_calls": [{"name": "mcp:bare_fn", "args": {}, "id": "c-1"}],
-                }
-            },
-        }
-    ]
-    out = await _drive(DeepAgentEventAdapter(), raw)
-    assert isinstance(out[0], FunctionCallSSE)
-    assert out[0].data.input_arguments == {
-        "server_id": "nspace",
-        "name": "bare_fn",
-        "arguments": {},
-    }
 
 
 @pytest.mark.asyncio

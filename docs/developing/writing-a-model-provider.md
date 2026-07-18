@@ -44,7 +44,7 @@ class AnthropicProvider(ModelProvider):
 Register it:
 
 ```toml
-[project.entry-points."openbb_agent_server.models"]
+[project.entry-points."openbb_agent_server.model_providers"]
 anthropic = "my_package.anthropic:AnthropicProvider"
 ```
 
@@ -79,7 +79,7 @@ Every LangChain v1 chat model adapter implements all three.
 
 ## Per-call vs per-profile config
 
-The merged `config` dict comes from `profile.model_config` + any per-request overrides safely allowed by your profile. Common keys:
+The merged `config` dict comes from the profile's `[agent.model.config]` TOML table (the `model_config_` attribute on `AgentProfile` — trailing underscore because Pydantic reserves `model_config`) + any per-request overrides safely allowed by your profile. Common keys:
 
 | Key | Meaning |
 | --- | --- |

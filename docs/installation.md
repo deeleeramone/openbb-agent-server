@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- **Python 3.11+** (`requires-python = ">=3.11,<4"`).
+- **Python 3.11+** (`requires-python = ">=3.11,<3.15"`).
 - An **NVIDIA API key** for production-quality embeddings, reranking, and the NIM-backed multimodal tools (vision / audio). Without one the server falls back to deterministic hash embeddings and the NIM-backed tools quietly skip registration. Get one at [build.nvidia.com](https://build.nvidia.com).
 - A **model-provider key** for whichever chat model you run (Anthropic / OpenAI / Bedrock / Vertex / Groq). The default profile uses an NVIDIA-hosted model, so an NVIDIA key alone is enough to start.
 
@@ -40,7 +40,6 @@ Install only what your deployment needs. Each model provider is opt-in so a mini
 | `postgres` | `psycopg[binary]`, `pgvector`, `langgraph-checkpoint-postgres` | Postgres history + the Postgres checkpointer (multi-worker prod) |
 | `tavily` | `tavily-python` | Tavily web-search backend (better quality, needs an API key) |
 | `pywry` | `pywry` | The ACP desktop canvas (`openbb-agent-canvas`) — **not** in `[all]` |
-| `workspace-mcp` | `openbb-workspace-mcp` (GitHub) | In-process Workspace MCP mount at `/mcp/workspace` |
 | `all` | every extra **except** `pywry` | Everything for a server deployment |
 
 ```sh
@@ -49,12 +48,6 @@ pip install -e ".[postgres,tavily]"      # combine
 pip install -e ".[all]"                  # full server stack (no pywry)
 pip install -e ".[pywry]"                # the desktop canvas
 ```
-
-:::note
-
-The `workspace-mcp` extra requires Python ≥ 3.13 (upstream constraint). On 3.11 / 3.12 it resolves to an empty list and the in-process mount soft-skips with an info log.
-
-:::
 
 ## Console scripts
 

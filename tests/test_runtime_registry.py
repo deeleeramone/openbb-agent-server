@@ -40,7 +40,7 @@ def test_load_passes_config_kwargs_to_constructor() -> None:
 
 
 def test_model_provider_group_registers_all_providers() -> None:
-    names = registry.available("openbb_agent_server.models")
+    names = registry.available("openbb_agent_server.model_providers")
     assert {
         "anthropic",
         "openai",
@@ -94,7 +94,7 @@ def test_load_drops_unknown_config_keys_with_warning(
 
     with caplog.at_level(logging.WARNING):
         provider = registry.load(
-            "openbb_agent_server.models",
+            "openbb_agent_server.model_providers",
             "openai_compat",
             {
                 "base_url": "http://localhost:8000/v1",

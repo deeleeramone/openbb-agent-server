@@ -19,18 +19,18 @@ Two ways to run the agent: as an **HTTP server** behind OpenBB Workspace, or as 
     It logs where it is listening:
 
     ```json
-    {"level":"INFO","logger":"openbb_agent_server.main","message":"agent server listening on 127.0.0.1:8010"}
+    {"level":"INFO","logger":"openbb_agent_server.main","message":"agent server listening on 127.0.0.1:6900"}
     ```
 
 3.  Verify it responds:
 
     ```sh
-    curl http://127.0.0.1:8010/agents.json
+    curl http://127.0.0.1:6900/agents.json
     ```
 
     You should get a JSON map of profile metadata (the shape is documented in the [Wire-protocol contract](explanation/wire-contract.md)).
 
-4.  Add it to Workspace: **AI Agents → Add Agent → paste `http://127.0.0.1:8010` → save**. Full walk-through: [Workspace integration](guides/workspace-integration.md).
+4.  Add it to Workspace: **AI Agents → Add Agent → paste `http://127.0.0.1:6900` → save**. Full walk-through: [Workspace integration](guides/workspace-integration.md).
 
 5.  Pick the agent in the chat panel and ask:
 

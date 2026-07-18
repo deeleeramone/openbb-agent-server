@@ -14,7 +14,7 @@ reranker_provider = "nvidia"               # empty string disables
 reranker_model = "nv-rerank-qa-mistral-4b:1"
 rerank_fanout = 32                         # ANN candidates fed to the reranker
 translation_provider = "nvidia"            # empty string disables
-translation_model = "nvidia/riva-translate-4b-instruct-v1_1"
+translation_model = "nvidia/riva-translate-4b-instruct"
 translate_for_ingestion = true             # auto-translate non-English chunks before embedding
 ingest_target_language = "English"
 ingest_char_threshold = 2000               # only ingest content over this many chars
@@ -60,8 +60,8 @@ Reads (`recall_user_memory` tool, `GET /v1/memory`) require `memory:read`.
 
 | Source | When |
 | --- | --- |
-| `MemoryWriter` middleware | post-turn, extracts durable facts from the assistant reply (requires `memory:write`) |
 | `ingest_request_context` | long uploaded files / human messages exceeding `ingest_char_threshold` get chunked + embedded at request time |
+| `memory/writer.py` helper | optional post-run extraction utility for custom integrations (not wired into the default middleware list) |
 
 Every write carries `source_trace_id` so any recalled fact can be traced back to the conversation that produced it.
 
@@ -85,5 +85,5 @@ Every write carries `source_trace_id` so any recalled fact can be traced back to
 - [`memory/sqlite_store.py`](https://github.com/deeleeramone/openbb-agent-server/blob/main/openbb_agent_server/memory/sqlite_store.py) — SQLiteVec impl.
 - [`memory/factory.py`](https://github.com/deeleeramone/openbb-agent-server/blob/main/openbb_agent_server/memory/factory.py) — embedder / reranker / translator builders.
 - [`memory/ingestion.py`](https://github.com/deeleeramone/openbb-agent-server/blob/main/openbb_agent_server/memory/ingestion.py) — request-time ingestion.
-- [`memory/writer.py`](https://github.com/deeleeramone/openbb-agent-server/blob/main/openbb_agent_server/memory/writer.py) — `MemoryWriter` middleware.
+- [`memory/writer.py`](https://github.com/deeleeramone/openbb-agent-server/blob/main/openbb_agent_server/memory/writer.py) — optional post-run memory extraction helper.
 - [`memory/classifier.py`](https://github.com/deeleeramone/openbb-agent-server/blob/main/openbb_agent_server/memory/classifier.py) — code vs text routing.

@@ -1,11 +1,11 @@
 [project]
 name = "openbb-agent-server"
-version = "0.1.1"
+version = "0.2.0"
 description = "OpenBB Agent Server: pluggable, multi-tenant agent backend wired to the OpenBB Workspace UI."
 authors = [{ name = "Danglewood", email = "85772166+deeleeramone@users.noreply.github.com" }]
 license = { text = "AGPL-3.0-only" }
 readme = "README.md"
-requires-python = ">=3.11,<4"
+requires-python = ">=3.11,<3.15"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn>=0.32.0",
@@ -54,9 +54,6 @@ postgres = [
 ]
 tavily = ["tavily-python>=0.5"]
 pywry = ["pywry>=2.0.4"]
-# In-process Workspace MCP server — not on PyPI, install manually:
-#   pip install "openbb-workspace-mcp @ https://github.com/OpenBB-finance/workspace-mcp/archive/refs/heads/main.zip"
-# Requires Python >=3.13. On 3.11/3.12 the mount soft-skips with an info log.
 
 all = [
     "openbb-agent-server[anthropic,openai,bedrock,vertex,google_genai,groq,postgres,tavily]",
@@ -78,7 +75,7 @@ api_key_table = "openbb_agent_server.plugins.auth.api_key_table:ApiKeyTableAuthB
 oidc_jwt = "openbb_agent_server.plugins.auth.oidc_jwt:OidcJwtAuthBackend"
 openbb_workspace = "openbb_agent_server.plugins.auth.openbb_workspace:OpenBBWorkspaceAuthBackend"
 
-[project.entry-points."openbb_agent_server.models"]
+[project.entry-points."openbb_agent_server.model_providers"]
 anthropic = "openbb_agent_server.plugins.models.anthropic_provider:AnthropicProvider"
 openai = "openbb_agent_server.plugins.models.openai_provider:OpenAIProvider"
 openai_compat = "openbb_agent_server.plugins.models.openai_compat_provider:OpenAICompatProvider"
@@ -105,11 +102,11 @@ dashboard = "openbb_agent_server.plugins.tools.dashboard:DashboardToolSource"
 groq_audio = "openbb_agent_server.plugins.tools.groq_audio:GroqAudioToolSource"
 gemini_image = "openbb_agent_server.plugins.tools.gemini_image:GeminiImageToolSource"
 gemini_embeddings = "openbb_agent_server.plugins.tools.gemini_embeddings:GeminiEmbeddingsToolSource"
-workspace_mcp = "openbb_agent_server.plugins.tools.workspace_mcp:WorkspaceMcpToolSource"
 translate = "openbb_agent_server.plugins.tools.translate:NvidiaTranslateToolSource"
 rerank = "openbb_agent_server.plugins.tools.rerank:NvidiaRerankToolSource"
 vision_qa = "openbb_agent_server.plugins.tools.vision_qa:VisionQaToolSource"
 gemma_audio = "openbb_agent_server.plugins.tools.gemma_audio:GemmaAudioToolSource"
+nemotron_ocr = "openbb_agent_server.plugins.tools.nemotron_ocr:NemotronOcrToolSource"
 paligemma_vision = "openbb_agent_server.plugins.tools.paligemma_vision:PaliGemmaVisionToolSource"
 background_jobs = "openbb_agent_server.plugins.tools.background_jobs:BackgroundJobsToolSource"
 pywry_canvas = "openbb_agent_server.plugins.tools.pywry_canvas:PyWryCanvasToolSource"
@@ -134,6 +131,20 @@ researcher = "openbb_agent_server.plugins.subagents.researcher:ResearcherSubAgen
 charter = "openbb_agent_server.plugins.subagents.charter:CharterSubAgent"
 analyst = "openbb_agent_server.plugins.subagents.analyst:AnalystSubAgent"
 pdf_reader = "openbb_agent_server.plugins.subagents.pdf_reader:PdfReaderSubAgent"
+deepseek-v4-flash = "openbb_agent_server.plugins.subagents.model_profile:_deepseek_v4_flash_subagent"
+deepseek-v4-pro = "openbb_agent_server.plugins.subagents.model_profile:_deepseek_v4_pro_subagent"
+nemotron-3-super = "openbb_agent_server.plugins.subagents.model_profile:_nemotron_3_super_subagent"
+nemotron-ultra = "openbb_agent_server.plugins.subagents.model_profile:_nemotron_ultra_subagent"
+nemotron-3-ultra = "openbb_agent_server.plugins.subagents.model_profile:_nemotron_3_ultra_subagent"
+nemotron-3-nano = "openbb_agent_server.plugins.subagents.model_profile:_nemotron_3_nano_subagent"
+mistral-small-4 = "openbb_agent_server.plugins.subagents.model_profile:_mistral_small_4_subagent"
+llama-4-maverick = "openbb_agent_server.plugins.subagents.model_profile:_llama_4_maverick_subagent"
+gemma-4 = "openbb_agent_server.plugins.subagents.model_profile:_gemma_4_subagent"
+gpt-oss-120b = "openbb_agent_server.plugins.subagents.model_profile:_gpt_oss_120b_subagent"
+"glm-5.1" = "openbb_agent_server.plugins.subagents.model_profile:_glm_5_1_subagent"
+"qwen3.5" = "openbb_agent_server.plugins.subagents.model_profile:_qwen3_5_subagent"
+minimax-m3 = "openbb_agent_server.plugins.subagents.model_profile:_minimax_m3_subagent"
+"step-3.7-flash" = "openbb_agent_server.plugins.subagents.model_profile:_step_3_7_flash_subagent"
 
 [dependency-groups]
 dev = [

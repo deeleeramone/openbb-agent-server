@@ -111,9 +111,11 @@ Constructor knobs:
 
 | Scope | Required by |
 | --- | --- |
-| `agent:query` | `POST /v1/query`, `/v1/conversations/*/cancel` |
+| `agent:query` | `POST /v1/query` |
 | `memory:read` | `GET /v1/memory`, `recall_user_memory` tool |
-| `memory:write` | `PATCH /v1/memory/{id}`, `DELETE /v1/memory/{id}`, `MemoryWriter` middleware, `ingest_request_context` |
+| `memory:write` | `PATCH /v1/memory/{id}`, `DELETE /v1/memory/{id}`, `ingest_request_context` |
+
+`POST /v1/conversations/{id}/cancel` requires authentication but no scope — it only cancels runs owned by the calling principal.
 
 A backend can issue any scope string; plugins check via `principal.has_scope("foo")`.
 

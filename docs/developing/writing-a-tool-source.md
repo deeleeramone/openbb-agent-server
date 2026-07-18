@@ -141,9 +141,9 @@ Then register both via `StructuredTool.from_function(coroutine=foo, …)` and `c
 | Kind | Where it runs | How to write it |
 | --- | --- | --- |
 | Server-side | inside the agent loop, in this process | normal `StructuredTool.from_function`; returns a value |
-| Client-side | inside the Workspace UI | a stub `StructuredTool` whose name starts with `client:` (or whose call raises `PendingClientToolCall`); the runtime emits `FunctionCallSSE` and the next request brings the result back |
+| Client-side | inside the Workspace UI | a stub `StructuredTool` whose name starts with `client:`; the runtime emits `FunctionCallSSE` and the next request brings the result back |
 
-The `client_side` tool source is the entry point for the latter. The `workspace_mcp` tool source forwards the user's enabled MCP tools by the same mechanism.
+The `client_side` tool source is the entry point for the latter.
 
 ## Tests
 

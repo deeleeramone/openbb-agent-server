@@ -10,7 +10,7 @@ from openbb_agent_server.plugins.models._validation import check_min, check_rang
 from openbb_agent_server.runtime.context import RunContext
 from openbb_agent_server.runtime.plugins import ModelProvider
 
-_REASONING_EFFORTS = {"none", "low", "medium", "high"}
+_REASONING_EFFORTS = {"none", "low", "medium", "high", "max"}
 
 
 def _silence_unknown_tools_warning(model: Any) -> None:
@@ -96,7 +96,8 @@ class NvidiaProvider(ModelProvider):
             inverse ``disable_streaming`` flag passed to ``ChatNVIDIA``.
         reasoning_effort : str or None, optional
             Reasoning effort level; one of ``"none"``, ``"low"``,
-            ``"medium"``, or ``"high"``. Forwarded via ``model_kwargs``.
+            ``"medium"``, ``"high"``, or ``"max"``. Forwarded via
+            ``model_kwargs``.
         reasoning_budget : int or None, optional
             Token budget for reasoning. Must be ``-1`` (disabled) or
             ``>= 0``. Forwarded via ``model_kwargs``.

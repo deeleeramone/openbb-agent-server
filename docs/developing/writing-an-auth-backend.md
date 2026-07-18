@@ -75,9 +75,11 @@ cookie = "my_package.cookie_auth:CookieAuthBackend"
 Select:
 
 ```toml
-[settings]
-auth_backend = "cookie"
+[agent.auth]
+backend = "cookie"
 ```
+
+(or via the environment: `OPENBB_AGENT_AUTH_BACKEND=cookie`).
 
 ## Contract
 
@@ -97,7 +99,7 @@ The runtime enforces three named scopes today:
 | --- | --- |
 | `agent:query` | `POST /v1/query` |
 | `memory:read` | `GET /v1/memory`, `recall_user_memory` tool |
-| `memory:write` | `MemoryWriter` middleware, `PATCH /v1/memory/{id}`, `DELETE /v1/memory/{id}`, `ingest_request_context`, `write_memory` tool |
+| `memory:write` | `PATCH /v1/memory/{id}`, `DELETE /v1/memory/{id}`, `ingest_request_context` |
 
 Plus an open-ended `admin` scope for future admin endpoints. Backends can issue any scope string — plug-ins check via `principal.has_scope("foo")`.
 

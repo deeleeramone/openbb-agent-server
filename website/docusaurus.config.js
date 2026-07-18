@@ -38,9 +38,14 @@ const config = {
           path: '../docs',
           routeBasePath: '/',
           sidebarPath: './sidebars.js',
-          exclude: ['_archive/**'],
-          editUrl:
-            'https://github.com/deeleeramone/openbb-agent-server/tree/main/docs/',
+          exclude: ['_archive/**', 'reference/_vendor/**'],
+          editUrl: ({docPath}) => {
+            const normalized = String(docPath)
+              .replace(/\\/g, '/')
+              .replace(/^(\.\.\/)+/, '')
+              .replace(/^docs\//, '');
+            return `https://github.com/deeleeramone/openbb-agent-server/tree/main/docs/${normalized}`;
+          },
         },
         blog: false,
         theme: {
